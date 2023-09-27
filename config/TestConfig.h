@@ -34,8 +34,6 @@ private:
 	unsigned char * customData;
 	unsigned int customDataLength;
 
-	bool isCustomData = false;
-
 public:
 
 	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, std::chrono::microseconds singleTestInterval, std::chrono::microseconds totalTestInterval,

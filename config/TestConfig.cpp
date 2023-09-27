@@ -25,9 +25,7 @@ TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount
 											   destinationAddress(destinationAddress),
 											   destinationPort(destinationPort), customData(customData),
 											   customDataLength(customDataLength) {
-	if (customData != nullptr)
-		this->isCustomData = true;
-	else {
+	if (customData == nullptr) {
 		this->customDataLength = generateCustomDataLength();
 		this->customData = generateCustomData(this->customDataLength);
 	}
@@ -90,8 +88,7 @@ unsigned int TestConfig::getCustomDataLength() const {
 }
 
 TestConfig::~TestConfig() {
-	if (!isCustomData)
-		delete[] customData;
+	delete[] customData;
 }
 
 int tc::convertNetworkType(tc::TestNetworkType testNetworkType) {

@@ -1,6 +1,6 @@
 #ifndef NETDESIGN1_TESTRESULT_H
 #define NETDESIGN1_TESTRESULT_H
-
+#include "iostream"
 #include "chrono"
 
 namespace tr {
@@ -15,16 +15,16 @@ namespace tr {
 
 class TestResult {
 
-private:
-
-	tr::TestResultType type;
-
-	std::chrono::microseconds duration;
-
 public:
 
 	TestResult(tr::TestResultType type, std::chrono::microseconds duration);
+
+	tr::TestResultType type;
+	std::chrono::microseconds duration;
 };
+
+
+std::ostream &operator<<(std::ostream &os, TestResult const &testResult);
 
 
 #endif //NETDESIGN1_TESTRESULT_H

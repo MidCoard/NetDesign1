@@ -15,6 +15,8 @@ public:
 	explicit TestResults(unsigned int totalTests);
 
 	void push(unsigned int testIndex, const TestResult &result);
+
+	TestResult get(unsigned int testIndex, unsigned int resultIndex);
 };
 
 
