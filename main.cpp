@@ -13,7 +13,6 @@ void close() {
 		delete passiveServer;
 	}
 	if (activeServer != nullptr) {
-		activeServer->close();
 		delete activeServer;
 	}
 }
@@ -51,8 +50,11 @@ TestConfig * createTestConfigByTerminal() {
 	return new TestConfig(singleTestCount, totalTestCount, std::chrono::microseconds(singleTestInterval),
 	                      std::chrono::microseconds(totalTestInterval), networkType == 0 ? tc::TestNetworkType::UDP : tc::TestNetworkType::TCP, sourcePort,
 	                      destinationAddress, destinationPort, customDataArray, customData.length());
+}
 
-
+TestConfig * createSimpleTestConfig() {
+	return new TestConfig(100, 1, std::chrono::microseconds(1000), std::chrono::microseconds(100000),
+	                      tc::TestNetworkType::TCP, 24001, "127.0.0.1", 24000, nullptr, 0);
 }
 
 int main() {
@@ -61,7 +63,10 @@ int main() {
 		int op;
 		std::cout << "Please input your operation: " << std::endl;
 		std::cin >> op;
-		if (op == 0) {
+		if (op == -1) {
+			delete testConfig;
+			testConfig = createSimpleTestConfig();
+		} else if (op == 0) {
 			delete testConfig;
 			testConfig = createTestConfigByTerminal();
 		} else if (op == 1) {
@@ -72,19 +77,21 @@ int main() {
 			delete passiveServer;
 		} else if (op == 3) {
 			activeServer = new ActiveServer(*testConfig);
+		} else if (op == 4) {
 			TestResults results = activeServer->test();
 			for (int i = 0; i < testConfig->getTotalTestCount(); i ++) {
 				std::cout << "Test " << i << " result: " << std::endl;
 				for (int j = 0; j < testConfig->getSingleTestCount(); j++) {
-					std::cout << "Test " << j << " result: " << results.get(i,j) << std::endl;
+					std::cout << "Case " << j << " result: " << results.get(i,j) << std::endl;
 				}
 				std::cout << "==========================================" << std::endl;
 			}
-		} else if (op == 4) {
-			activeServer->close();
+		} else if (op == 5) {
 			delete activeServer;
 		} else {
 			close();
+			delete testConfig;
+			break;
 		}
 	}
 }

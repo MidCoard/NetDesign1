@@ -1,4 +1,6 @@
 #include "PassiveServer.h"
+#include "iostream"
+
 
 PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.getDestinationPort()), testNetworkType(testConfig.getTestNetworkType()), customDataLength(testConfig.getCustomDataLength()) {
 	this->internal = socket(AF_INET, tc::convertNetworkType(testNetworkType), 0);
@@ -30,10 +32,12 @@ void PassiveServer::run() {
 			int client = accept(this->internal, (struct sockaddr *) &addr, &addrlen);
 			if (client == -1)
 				continue;
-			unsigned int length = read(client, this->buffer, customDataLength);
-			if (length == -1)
-				continue;
-			write(client, this->buffer, length);
+			unsigned int length;
+			while ((length = read(client, this->buffer, customDataLength)) > 0) {
+				write(client, this->buffer, length);
+			}
+			shutdown(client, SHUT_RDWR);
+			::close(client);
 		}
 	});
 }
@@ -43,13 +47,15 @@ void PassiveServer::close() {
 		return;
 	if (this->shouldClose)
 		return;
+	::close(this->internal);
 	this->shouldClose = true;
 	this->thread->join();
 	delete this->thread;
-	::close(this->internal);
+	this->thread = nullptr;
 }
 
 PassiveServer::~PassiveServer() {
+	this->close();
 	delete[] this->buffer;
 }
 

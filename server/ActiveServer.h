@@ -14,10 +14,6 @@ private:
 
 	TestConfig testConfig;
 
-	bool canClose = true;
-
-	int internal;
-
 	unsigned char *buffer;
 
 public:
@@ -26,8 +22,6 @@ public:
 	~ActiveServer();
 
 	TestResults test();
-
-	void close() const;
 };
 
 
