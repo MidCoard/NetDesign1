@@ -2,6 +2,8 @@
 #define NETDESIGN1_TESTCONFIG_H
 
 #include "string_view"
+#include <sys/socket.h>
+#include "random"
 
 namespace tc {
 
@@ -10,14 +12,16 @@ namespace tc {
 		TCP
 	} TestNetworkType;
 
+	int convertNetworkType(TestNetworkType testNetworkType);
+
 }
 
 
 class TestConfig {
 
 private:
-	std::chrono::microseconds  singleTestCount;
-	std::chrono::microseconds  totalTestCount;
+	unsigned int singleTestCount;
+	unsigned int totalTestCount;
 	std::chrono::microseconds  singleTestInterval;
 	std::chrono::microseconds  totalTestInterval;
 	tc::TestNetworkType testNetworkType;
@@ -28,22 +32,48 @@ private:
 	unsigned short destinationPort;
 
 	unsigned char * customData;
-	int customDataLength;
+	unsigned int customDataLength;
 
-
-
+	bool isCustomData = false;
 
 public:
 
-	TestConfig(std::chrono::microseconds  singleTestCount, std::chrono::microseconds  totalTestCount, std::chrono::microseconds  singleTestInterval, std::chrono::microseconds  totalTestInterval,
+	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, std::chrono::microseconds singleTestInterval, std::chrono::microseconds totalTestInterval,
 	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
-	           unsigned short destinationPort, unsigned char * customData, int customDataLength);
+	           unsigned short destinationPort, unsigned char * customData, unsigned int customDataLength);
 
-//	TestConfig(int singleTestCount, int totalTestCount,)
+	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
+	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
+	           unsigned short destinationPort, unsigned char * customData, unsigned int customDataLength);
 
-	TestConfig(std::chrono::microseconds  singleTestCount, std::chrono::microseconds  totalTestCount, unsigned short sourcePort, std::string_view destinationAddress,
+	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
+	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
 	           unsigned short destinationPort);
 
+	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, unsigned short sourcePort, std::string_view destinationAddress,
+	           unsigned short destinationPort);
+
+	~TestConfig();
+
+	unsigned int getSingleTestCount() const;
+
+	unsigned int getTotalTestCount() const;
+
+	std::chrono::microseconds getSingleTestInterval() const;
+
+	std::chrono::microseconds getTotalTestInterval() const;
+
+	tc::TestNetworkType getTestNetworkType() const;
+
+	unsigned short getSourcePort() const;
+
+	std::string_view getDestinationAddress() const;
+
+	unsigned short getDestinationPort() const;
+
+	unsigned char * getCustomData() const;
+
+	unsigned int getCustomDataLength() const;
 
 
 };
