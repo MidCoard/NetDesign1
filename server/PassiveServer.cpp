@@ -33,9 +33,8 @@ void PassiveServer::run() {
 			if (client == -1)
 				continue;
 			unsigned int length;
-			while ((length = read(client, this->buffer, customDataLength)) > 0) {
+			while ((length = read(client, this->buffer, customDataLength)) > 0)
 				write(client, this->buffer, length);
-			}
 			shutdown(client, SHUT_RDWR);
 			::close(client);
 		}

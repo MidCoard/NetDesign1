@@ -12,16 +12,22 @@ class ActiveServer {
 
 private:
 
-	TestConfig testConfig;
+	TestConfig* testConfig;
 
 	unsigned char *buffer;
 
+	int client;
+
+	bool canClose = true;
+
 public:
-	explicit ActiveServer(const TestConfig& testConfig);
+	explicit ActiveServer(TestConfig* testConfig);
 
 	~ActiveServer();
 
 	TestResults test();
+
+	void close() const;
 };
 
 

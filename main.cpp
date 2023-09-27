@@ -8,12 +8,13 @@ PassiveServer * passiveServer = nullptr;
 ActiveServer * activeServer = nullptr;
 
 void close() {
+	if (activeServer != nullptr) {
+		activeServer->close();
+		delete activeServer;
+	}
 	if (passiveServer != nullptr) {
 		passiveServer->close();
 		delete passiveServer;
-	}
-	if (activeServer != nullptr) {
-		delete activeServer;
 	}
 }
 
@@ -54,7 +55,7 @@ TestConfig * createTestConfigByTerminal() {
 
 TestConfig * createSimpleTestConfig() {
 	return new TestConfig(100, 1, std::chrono::microseconds(1000), std::chrono::microseconds(100000),
-	                      tc::TestNetworkType::TCP, 24001, "127.0.0.1", 24000, nullptr, 0);
+	                      tc::TestNetworkType::UDP, 24001, "127.0.0.1", 24000, nullptr, 0);
 }
 
 int main() {
@@ -76,7 +77,7 @@ int main() {
 			passiveServer->close();
 			delete passiveServer;
 		} else if (op == 3) {
-			activeServer = new ActiveServer(*testConfig);
+			activeServer = new ActiveServer(testConfig);
 		} else if (op == 4) {
 			TestResults results = activeServer->test();
 			for (int i = 0; i < testConfig->getTotalTestCount(); i ++) {
@@ -87,6 +88,7 @@ int main() {
 				std::cout << "==========================================" << std::endl;
 			}
 		} else if (op == 5) {
+			activeServer->close();
 			delete activeServer;
 		} else {
 			close();

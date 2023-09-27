@@ -1,7 +1,6 @@
 #include "TestResult.h"
 
 static const char *testResultTypeStrings[] = {
-		"CONNECT_FAILED",
 		"WRITE_FAILED",
 		"READ_FAILED",
 		"DATA_MISMATCH",

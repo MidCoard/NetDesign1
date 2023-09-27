@@ -6,7 +6,6 @@
 namespace tr {
 
 	typedef enum {
-		CONNECT_FAILED,
 		WRITE_FAILED,
 		READ_FAILED,
 		DATA_MISMATCH,
