@@ -26,7 +26,8 @@ TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount
 											   destinationPort(destinationPort), customData(customData),
 											   customDataLength(customDataLength) {
 	if (customData == nullptr) {
-		this->customDataLength = generateCustomDataLength();
+		if (this->customDataLength == 0)
+			this->customDataLength = generateCustomDataLength();
 		this->customData = generateCustomData(this->customDataLength);
 	}
 }

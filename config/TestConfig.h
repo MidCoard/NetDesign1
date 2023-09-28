@@ -4,6 +4,7 @@
 #include "string_view"
 #include <sys/socket.h>
 #include "random"
+#include  <cstring>
 
 namespace tc {
 
