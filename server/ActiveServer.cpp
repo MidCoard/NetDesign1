@@ -18,29 +18,51 @@ ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
 		if (bind(client, (struct sockaddr *) &clientAddr, sizeof(clientAddr)) == -1)
 			throw std::runtime_error("Failed to bind socket at port " + std::to_string(testConfig->getSourcePort()));
 	}
-	struct sockaddr_in addr{};
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(testConfig->getDestinationPort());
-	addr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
-	if (connect(client, (struct sockaddr *) &addr, sizeof(addr)) == -1)
-		throw std::runtime_error("Failed to connect to " + std::string(testConfig->getDestinationAddress()) + ":" + std::to_string(testConfig->getDestinationPort()));
+	if (testConfig->getTestNetworkType() == tc::TestNetworkType::TCP) {
+		struct sockaddr_in addr{};
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(testConfig->getDestinationPort());
+		addr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
+		if (connect(client, (struct sockaddr *) &addr, sizeof(addr)) == -1)
+			throw std::runtime_error("Failed to connect to " + std::string(testConfig->getDestinationAddress()) + ":" +
+			                         std::to_string(testConfig->getDestinationPort()));
+	}
 }
 
 TestResults ActiveServer::test() {
+	struct sockaddr_in serverAddr{};
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(testConfig->getDestinationPort());
+	serverAddr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
+	socklen_t addrlen = sizeof(serverAddr);
 	this->canClose = false;
 	TestResults results = TestResults(testConfig->getTotalTestCount());
 	for (int i = 0; i < this->testConfig->getTotalTestCount(); i++) {
 		for (int j = 0; j < this->testConfig->getSingleTestCount(); j++) {
 			auto now = std::chrono::high_resolution_clock::now();
-			if (write(client, this->testConfig->getCustomData(), this->testConfig->getCustomDataLength()) == -1) {
-				TestResult result = TestResult(tr::TestResultType::WRITE_FAILED, std::chrono::microseconds(0));
-				results.push(i, result);
-				continue;
-			}
-			if (read(client, this->buffer, this->testConfig->getCustomDataLength()) == -1) {
-				TestResult result = TestResult(tr::TestResultType::READ_FAILED, std::chrono::microseconds(0));
-				results.push(i, result);
-				continue;
+			if (this->testConfig->getTestNetworkType() == tc::TestNetworkType::TCP) {
+				if (write(client, this->testConfig->getCustomData(), this->testConfig->getCustomDataLength()) == -1) {
+					TestResult result = TestResult(tr::TestResultType::WRITE_FAILED, std::chrono::microseconds(0));
+					results.push(i, result);
+					continue;
+				}
+				if (read(client, this->buffer, this->testConfig->getCustomDataLength()) == -1) {
+					TestResult result = TestResult(tr::TestResultType::READ_FAILED, std::chrono::microseconds(0));
+					results.push(i, result);
+					continue;
+				}
+			} else if (this->testConfig->getTestNetworkType() == tc::TestNetworkType::UDP) {
+				if (sendto(client, this->testConfig->getCustomData(), this->testConfig->getCustomDataLength(), 0,
+				           (struct sockaddr*) &serverAddr, addrlen) == -1) {
+					TestResult result = TestResult(tr::TestResultType::WRITE_FAILED, std::chrono::microseconds(0));
+					results.push(i, result);
+					continue;
+				}
+				if (recvfrom(client, this->buffer, this->testConfig->getCustomDataLength(), 0, (struct sockaddr*) &serverAddr, &addrlen) == -1) {
+					TestResult result = TestResult(tr::TestResultType::READ_FAILED, std::chrono::microseconds(0));
+					results.push(i, result);
+					continue;
+				}
 			}
 			auto then = std::chrono::high_resolution_clock::now();
 			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(then - now);
@@ -68,6 +90,14 @@ void ActiveServer::close() const {
 
 ActiveServer::~ActiveServer() {
 	delete[] this->buffer;
+}
+
+bool ActiveServer::refreshTestConfig(TestConfig *testConfig) {
+	if (testConfig->getSourcePort() != testConfig->getSourcePort() || testConfig->getDestinationPort() != testConfig->getDestinationPort() ||
+	    testConfig->getTestNetworkType() != testConfig->getTestNetworkType() || testConfig->getDestinationAddress() != testConfig->getDestinationAddress())
+		return false;
+	this->testConfig = testConfig;
+	return true;
 }
 
 

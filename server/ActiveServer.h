@@ -28,6 +28,8 @@ public:
 	TestResults test();
 
 	void close() const;
+
+	bool refreshTestConfig(TestConfig* testConfig);
 };
 
 
