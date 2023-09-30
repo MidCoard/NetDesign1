@@ -77,8 +77,10 @@ static std::initializer_list<QWidget *> addHorizontalWidgetInVerticalLayout(QVBo
 	return addHorizontalWidgetsInVerticalLayout(verticalLayout, {widget});
 }
 
-static std::initializer_list<QWidget *> addHorizontalTextEditorInVerticalLayout(QVBoxLayout * verticalLayout, const QString& text) {
-	return addHorizontalWidgetsInVerticalLayout(verticalLayout, {new QLabel(text), new QLineEdit});
+static std::pair<QLabel*, QLineEdit*> addHorizontalTextEditorInVerticalLayout(QVBoxLayout * verticalLayout, const QString& text) {
+	std::pair<QLabel*, QLineEdit*> pair = {new QLabel(text), new QLineEdit()};
+	addHorizontalWidgetsInVerticalLayout(verticalLayout, {pair.first, pair.second});
+	return pair;
 }
 
 static std::initializer_list<QWidget *> addHorizontalLabelWidgetInVerticalLayout(QVBoxLayout * verticalLayout, const QString& text, QWidget * widget) {
@@ -88,20 +90,55 @@ static std::initializer_list<QWidget *> addHorizontalLabelWidgetInVerticalLayout
 int main(int argc, char *argv[]) {
 	QApplication a(argc, argv);
 	QWidget mainWindow;
-	// passive part
+	// config setup
+	auto* configLabel = new QLabel("Global Config");
+	auto* configButton = new QPushButton("Config");
+	auto* configLayout = new QHBoxLayout;
+	configLayout->addWidget(configLabel);
+	configLayout->addWidget(configButton);
+
+	// config window setup
+
+	auto* configWindow = new QWidget;
+	auto* configWindowLayout = new QVBoxLayout;
+	configWindow->setLayout(configWindowLayout);
+	configWindow->setWindowTitle("Passive Server Config");
+	auto* configLoadButton = new QPushButton("Load Config");
+	configWindowLayout->addWidget(configLoadButton);
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Count(0-10000)").second->setValidator(new QIntValidator(0, 10000));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Count(0-10000)").second->setValidator(new QIntValidator(0, 10000));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Interval(0-100000000us)").second->setValidator(new QIntValidator(0, 100000000));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Interval(0-100000000us)").second->setValidator(new QIntValidator(0, 100000000));
+	auto * configNetworkTypeComboBox = new QComboBox;
+	configNetworkTypeComboBox->addItem("UDP");
+	configNetworkTypeComboBox->addItem("TCP");
+	addHorizontalLabelWidgetInVerticalLayout(configWindowLayout, "Network Type", configNetworkTypeComboBox);
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Source Port").second->setValidator(new QIntValidator(0, 65535));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Destination Address");
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Destination Port").second->setValidator(new QIntValidator(0, 65535));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-1024)").second->setValidator(new QIntValidator(0, 1024));
+	addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data");
+	auto* configConfirmButton = new QPushButton("Confirm");
+	configWindowLayout->addWidget(configConfirmButton);
+	configWindow->hide();
+
+	// connect config window
+	QObject::connect(configButton, &QPushButton::clicked, configWindow, &QWidget::show);
+
+
+	// passive setup
 	auto* passiveLabel = new QLabel("Passive Server");
 	auto* passiveStartButton = new QPushButton("Start");
 	auto* passiveStopButton = new QPushButton("Stop");
-	auto* passiveConfigButton = new QPushButton("Config");
 	auto* passiveStatus = new QLabel("Status: Stopped");
 	auto* passiveLayout = new QHBoxLayout;
 	passiveLayout->addWidget(passiveLabel);
 	passiveLayout->addWidget(passiveStartButton);
 	passiveLayout->addWidget(passiveStopButton);
-	passiveLayout->addWidget(passiveConfigButton);
 	passiveLayout->addWidget(passiveStatus);
 
 	auto* mainLayout = new QVBoxLayout;
+	mainLayout->addLayout(configLayout);
 	mainLayout->addLayout(passiveLayout);
 
 	mainWindow.setLayout(mainLayout);
@@ -109,31 +146,8 @@ int main(int argc, char *argv[]) {
 	mainWindow.setWindowTitle("Network Design 1");
 
 
-	// passive config page
-	auto* passiveConfigWindow = new QWidget;
-	auto* passiveConfigLayout = new QVBoxLayout;
-	passiveConfigWindow->setLayout(passiveConfigLayout);
-	passiveConfigWindow->setWindowTitle("Passive Server Config");
-	auto* passiveConfigLoadButton = new QPushButton("Load");
-	passiveConfigLayout->addWidget(passiveConfigLoadButton);
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Total Test Count");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Single Test Count");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Total Test Interval(us)");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Single Test Interval(us)");
-	auto * networkTypeComboBox = new QComboBox;
-	networkTypeComboBox->addItem("UDP");
-	networkTypeComboBox->addItem("TCP");
-	addHorizontalLabelWidgetInVerticalLayout(passiveConfigLayout, "Network Type", networkTypeComboBox);
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Source Port");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Destination Address");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Destination Port");
-	addHorizontalTextEditorInVerticalLayout(passiveConfigLayout, "Custom Data");
-	auto* passiveConfigConfirmButton = new QPushButton("Confirm");
-	passiveConfigLayout->addWidget(passiveConfigConfirmButton);
-	passiveConfigWindow->hide();
+	// config page
 
-	// make config button work
-	QObject::connect(passiveConfigButton, &QPushButton::clicked, passiveConfigWindow, &QWidget::show);
 
 
 
