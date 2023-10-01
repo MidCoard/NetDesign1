@@ -5,7 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+
+set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 COMPONENTS
         Core
@@ -13,9 +15,9 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-file(GLOB_RECURSE SOURCES "config/*.cpp" "server/*.cpp")
+file(GLOB_RECURSE SOURCES "config/*.cpp" "server/*.cpp" "ui/*.cpp")
 
-include_directories(config server)
+include_directories(config server ui)
 
 add_executable(NetDesign1 main.cpp ${SOURCES})
 
