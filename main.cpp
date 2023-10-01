@@ -141,31 +141,58 @@ int main(int argc, char *argv[]) {
 	auto* totalCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Count(0-10000)").second;
 	totalCountEditor->setValidator(new QIntValidator(0, 10000));
 	QObject::connect(totalCountEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setTotalTestCount);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [totalCountEditor]() {
+		totalCountEditor->setText(globalTestConfigConstructor.getTotalTestCount());
+	});
 	auto* singleCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Count(0-10000)").second;
 	singleCountEditor->setValidator(new QIntValidator(0, 10000));
 	QObject::connect(singleCountEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setSingleTestCount);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [singleCountEditor]() {
+		singleCountEditor->setText(globalTestConfigConstructor.getSingleTestCount());
+	});
 	auto* totalIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Interval(0-100000000us)").second;
 	totalIntervalEditor->setValidator(new QIntValidator(0, 100000000));
 	QObject::connect(totalIntervalEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setTotalTestInterval);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [totalIntervalEditor]() {
+		totalIntervalEditor->setText(globalTestConfigConstructor.getTotalTestInterval());
+	});
 	auto* singleIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Interval(0-100000000us)").second;
 	singleIntervalEditor->setValidator(new QIntValidator(0, 100000000));
 	QObject::connect(singleIntervalEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setSingleTestInterval);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [singleIntervalEditor]() {
+		singleIntervalEditor->setText(globalTestConfigConstructor.getSingleTestInterval());
+	});
 	auto * configNetworkTypeComboBox = new QComboBox;
 	configNetworkTypeComboBox->addItem("UDP");
 	configNetworkTypeComboBox->addItem("TCP");
 	addHorizontalLabelWidgetInVerticalLayout(configWindowLayout, "Network Type", configNetworkTypeComboBox);
 	QObject::connect(configNetworkTypeComboBox, &QComboBox::currentIndexChanged, &globalTestConfigConstructor, &TestConfigConstructor::setNetworkType);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [configNetworkTypeComboBox]() {
+		configNetworkTypeComboBox->setCurrentIndex(globalTestConfigConstructor.getNetworkType());
+	});
 	auto* sourcePortEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Source Port").second;
 	sourcePortEditor->setValidator(new QIntValidator(0, 65535));
 	QObject::connect(sourcePortEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setSourcePort);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [sourcePortEditor]() {
+		sourcePortEditor->setText(globalTestConfigConstructor.getSourcePort());
+	});
 	auto* destinationAddressEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Destination Address").second;
 	QObject::connect(destinationAddressEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setDestinationAddress);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [destinationAddressEditor]() {
+		destinationAddressEditor->setText(globalTestConfigConstructor.getDestinationAddress());
+	});
 	auto* destinationPortEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Destination Port").second;
 	destinationPortEditor->setValidator(new QIntValidator(0, 65535));
 	QObject::connect(destinationPortEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setDestinationPort);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [destinationPortEditor]() {
+		destinationPortEditor->setText(globalTestConfigConstructor.getDestinationPort());
+	});
 	auto* customDataLengthEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-1024)").second;
 	customDataLengthEditor->setValidator(new QIntValidator(0, 1024));
 	QObject::connect(customDataLengthEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setCustomDataLength);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [customDataLengthEditor]() {
+		customDataLengthEditor->setText(globalTestConfigConstructor.getCustomDataLength());
+	});
 	auto* customDataClearButton = new QPushButton("Clear");
 	auto* customDataEditor = get<1>(addHorizontalTextEditorWidgetInVerticalLayout(configWindowLayout, "Custom Data", customDataClearButton));
 	QObject::connect(customDataClearButton, &QPushButton::clicked, [customDataEditor]() {
@@ -181,6 +208,9 @@ int main(int argc, char *argv[]) {
 		}
 	});
 	QObject::connect(customDataEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setCustomData);
+	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [customDataEditor]() {
+		customDataEditor->setText(globalTestConfigConstructor.getCustomData());
+	});
 	auto* configConfirmButton = new QPushButton("Confirm Config");
 	QObject::connect(configConfirmButton, &QPushButton::clicked, [configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor, customDataEditor
 																  ]() {
@@ -229,7 +259,10 @@ int main(int argc, char *argv[]) {
 	configWindow->hide();
 
 	// connect config window
-	QObject::connect(configButton, &QPushButton::clicked, configWindow, &QWidget::show);
+	QObject::connect(configButton, &QPushButton::clicked, [configWindow](){
+		globalTestConfigConstructor.emitEvent();
+		configWindow->show();
+	});
 
 	// config save window
 	QWidget* saveConfigWindow = new QWidget;
@@ -271,9 +304,6 @@ int main(int argc, char *argv[]) {
 	saveConfigWindow->hide();
 
 	QObject::connect(configSaveButton, &QPushButton::clicked, saveConfigWindow, &QWidget::show);
-
-
-//	QObject::connect()
 
 
 	// passive setup

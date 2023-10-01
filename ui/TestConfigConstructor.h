@@ -19,7 +19,7 @@ private:
 
 	tc::TestNetworkType testNetworkType = tc::TestNetworkType::UDP;
 	unsigned short sourcePort = 0;
-	std::string_view destinationAddress;
+	std::string destinationAddress;
 	unsigned short destinationPort = 0;
 
 	QString customData;
@@ -36,6 +36,32 @@ public:
 	TestConfig *construct();
 
 	bool loadFromFile(const QString& path);
+
+	void emitEvent();
+
+	QString getTotalTestCount() const;
+
+	QString getSingleTestCount() const;
+
+	QString getTotalTestInterval() const;
+
+	QString getSingleTestInterval() const;
+
+	int getNetworkType() const;
+
+	QString getSourcePort() const;
+
+	QString getDestinationAddress() const;
+
+	QString getDestinationPort() const;
+
+	QString getCustomData() const;
+
+	QString getCustomDataLength() const;
+
+signals:
+
+	void valueChanged();
 
 public slots:
 

@@ -66,13 +66,14 @@ bool TestConfigConstructor::loadFromFile(const QString& path) {
 	QDataStream stream(&file);
 	stream >> this->singleTestCount;
 	stream >> this->totalTestCount;
-	int tmp;
+	long long tmp;
 	stream >> tmp;
 	this->singleTestInterval = std::chrono::microseconds(tmp);
 	stream >> tmp;
 	this->totalTestInterval = std::chrono::microseconds(tmp);
-	stream >> tmp;
-	this->testNetworkType = (tc::TestNetworkType) tmp;
+	int tmp1;
+	stream >> tmp1;
+	this->testNetworkType = (tc::TestNetworkType) tmp1;
 	stream >> this->sourcePort;
 	QString tmp2;
 	stream >> tmp2;
@@ -80,7 +81,54 @@ bool TestConfigConstructor::loadFromFile(const QString& path) {
 	stream >> this->destinationPort;
 	stream >> this->customData;
 	this->customDataLength = this->customData.length();
+	if (file.error() != QFile::NoError || stream.status() != QDataStream::Ok)
+		return false;
+	emitEvent();
 	return true;
+}
+
+void TestConfigConstructor::emitEvent() {
+	emit valueChanged();
+}
+
+QString TestConfigConstructor::getTotalTestCount() const {
+	return QString::number(this->totalTestCount);
+}
+
+QString TestConfigConstructor::getSingleTestCount() const {
+	return QString::number(this->singleTestCount);
+}
+
+QString TestConfigConstructor::getTotalTestInterval() const {
+	return QString::number(this->totalTestInterval.count());
+}
+
+QString TestConfigConstructor::getSingleTestInterval() const {
+	return QString::number(this->singleTestInterval.count());
+}
+
+int TestConfigConstructor::getNetworkType() const {
+	return (int) this->testNetworkType;
+}
+
+QString TestConfigConstructor::getSourcePort() const {
+	return QString::number(this->sourcePort);
+}
+
+QString TestConfigConstructor::getDestinationAddress() const {
+	return QString::fromStdString(this->destinationAddress);
+}
+
+QString TestConfigConstructor::getDestinationPort() const {
+	return QString::number(this->destinationPort);
+}
+
+QString TestConfigConstructor::getCustomData() const {
+	return this->customData;
+}
+
+QString TestConfigConstructor::getCustomDataLength() const {
+	return QString::number(this->customDataLength);
 }
 
 TestConfigConstructor::TestConfigConstructor() = default;

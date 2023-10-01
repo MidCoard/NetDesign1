@@ -18,7 +18,7 @@ static unsigned char * generateCustomData(unsigned int customDataLength) {
 
 TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, std::chrono::microseconds  singleTestInterval, std::chrono::microseconds  totalTestInterval,
                        tc::TestNetworkType testNetworkType, unsigned short sourcePort,
-                       std::string_view destinationAddress, unsigned short destinationPort, unsigned char *customData,
+                       std::string destinationAddress, unsigned short destinationPort, unsigned char *customData,
                        unsigned int customDataLength) : singleTestCount(singleTestCount), totalTestCount(totalTestCount),
 											   singleTestInterval(singleTestInterval),
 											   totalTestInterval(totalTestInterval),
@@ -35,18 +35,18 @@ TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount
 
 TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
                        tc::TestNetworkType testNetworkType, unsigned short sourcePort,
-                       std::string_view destinationAddress, unsigned short destinationPort, unsigned char *customData,
+                       std::string destinationAddress, unsigned short destinationPort, unsigned char *customData,
                        unsigned int customDataLength) : TestConfig(singleTestCount, totalTestCount, std::chrono::microseconds(100), std::chrono::microseconds(100),
 														   testNetworkType, sourcePort, destinationAddress, destinationPort,
 														   customData, customDataLength) {}
 
 TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
                        tc::TestNetworkType testNetworkType, unsigned short sourcePort,
-                       std::string_view destinationAddress, unsigned short destinationPort) : TestConfig(singleTestCount, totalTestCount,
+                       std::string destinationAddress, unsigned short destinationPort) : TestConfig(singleTestCount, totalTestCount,
 																								   testNetworkType, sourcePort, destinationAddress, destinationPort, nullptr,
 																								   0) {}
 
-TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, unsigned short sourcePort, std::string_view destinationAddress, unsigned short destinationPort) : TestConfig(singleTestCount, totalTestCount,
+TestConfig::TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, unsigned short sourcePort, std::string destinationAddress, unsigned short destinationPort) : TestConfig(singleTestCount, totalTestCount,
                                                                                                                                                                                                                            tc::TestNetworkType::TCP, sourcePort, destinationAddress, destinationPort) {}
 
 unsigned int TestConfig::getSingleTestCount() const {
@@ -115,10 +115,13 @@ bool TestConfig::saveToFile(const QString& path) {
 	<< totalTestInterval.count()
 	<< static_cast<int>(testNetworkType)
 	<< sourcePort
-	<< QString::fromStdString(destinationAddress.data())
+	<< QString::fromStdString(destinationAddress)
 	<< destinationPort
 	<< QString::fromStdString(std::string(reinterpret_cast<char *>(customData), customDataLength));
 	file.close();
+	if (file.error() != QFile::NoError || out.status() != QDataStream::Ok)
+		return false;
+
 	return true;
 }
 

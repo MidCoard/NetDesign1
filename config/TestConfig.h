@@ -32,7 +32,7 @@ private:
 
 	unsigned short sourcePort;
 
-	std::string_view destinationAddress;
+	std::string destinationAddress;
 	unsigned short destinationPort;
 
 	unsigned char * customData;
@@ -41,18 +41,18 @@ private:
 public:
 
 	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, std::chrono::microseconds singleTestInterval, std::chrono::microseconds totalTestInterval,
-	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
+	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string destinationAddress,
 	           unsigned short destinationPort, unsigned char * customData, unsigned int customDataLength);
 
 	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
-	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
+	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string destinationAddress,
 	           unsigned short destinationPort, unsigned char * customData, unsigned int customDataLength);
 
 	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount,
-	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string_view destinationAddress,
+	           tc::TestNetworkType testNetworkType, unsigned short sourcePort, std::string destinationAddress,
 	           unsigned short destinationPort);
 
-	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, unsigned short sourcePort, std::string_view destinationAddress,
+	TestConfig(unsigned int singleTestCount, unsigned int totalTestCount, unsigned short sourcePort, std::string destinationAddress,
 	           unsigned short destinationPort);
 
 	~TestConfig();
