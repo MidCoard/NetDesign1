@@ -6,6 +6,7 @@
 #include <random>
 #include <string_view>
 #include <sys/socket.h>
+#include "QString"
 
 
 namespace tc {
@@ -75,6 +76,8 @@ public:
 	unsigned char * getCustomData() const;
 
 	unsigned int getCustomDataLength() const;
+
+	bool saveToFile(const QString& path);
 
 
 };

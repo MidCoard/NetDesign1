@@ -1,3 +1,4 @@
+#include <QFile>
 #include "TestConfigConstructor.h"
 #include "iostream"
 
@@ -59,7 +60,27 @@ TestConfig *TestConfigConstructor::construct() {
 }
 
 bool TestConfigConstructor::loadFromFile(const QString& path) {
-
+	QFile file(path);
+	if (!file.open(QIODevice::ReadOnly))
+		return false;
+	QDataStream stream(&file);
+	stream >> this->singleTestCount;
+	stream >> this->totalTestCount;
+	int tmp;
+	stream >> tmp;
+	this->singleTestInterval = std::chrono::microseconds(tmp);
+	stream >> tmp;
+	this->totalTestInterval = std::chrono::microseconds(tmp);
+	stream >> tmp;
+	this->testNetworkType = (tc::TestNetworkType) tmp;
+	stream >> this->sourcePort;
+	QString tmp2;
+	stream >> tmp2;
+	this->destinationAddress = tmp2.toStdString();
+	stream >> this->destinationPort;
+	stream >> this->customData;
+	this->customDataLength = this->customData.length();
+	return true;
 }
 
 TestConfigConstructor::TestConfigConstructor() = default;

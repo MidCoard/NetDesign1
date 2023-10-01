@@ -1,3 +1,4 @@
+#include <QFile>
 #include "TestConfig.h"
 
 static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
@@ -101,6 +102,24 @@ int tc::convertNetworkType(tc::TestNetworkType testNetworkType) {
 		default:
 			return -1;
 	}
+}
+
+bool TestConfig::saveToFile(const QString& path) {
+	QFile file(path);
+	if (!file.open(QIODevice::WriteOnly))
+		return false;
+	QDataStream out(&file);
+	out << singleTestCount
+	<< totalTestCount
+	<< singleTestInterval.count()
+	<< totalTestInterval.count()
+	<< static_cast<int>(testNetworkType)
+	<< sourcePort
+	<< QString::fromStdString(destinationAddress.data())
+	<< destinationPort
+	<< QString::fromStdString(std::string(reinterpret_cast<char *>(customData), customDataLength));
+	file.close();
+	return true;
 }
 
 

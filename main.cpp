@@ -231,6 +231,50 @@ int main(int argc, char *argv[]) {
 	// connect config window
 	QObject::connect(configButton, &QPushButton::clicked, configWindow, &QWidget::show);
 
+	// config save window
+	QWidget* saveConfigWindow = new QWidget;
+
+	auto* saveConfigPathLineEditor = new QLineEdit;
+	auto* saveConfigFileSelectButton = new QPushButton("Select File");
+	auto* saveConfigSaveButton = new QPushButton("Save Config");
+
+	auto* saveConfigWindowLayout = new QHBoxLayout;
+	saveConfigWindowLayout->addWidget(saveConfigPathLineEditor);
+	saveConfigWindowLayout->addWidget(saveConfigFileSelectButton);
+	saveConfigWindowLayout->addWidget(saveConfigSaveButton);
+
+	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigPathLineEditor]() {
+		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.nd1)");
+		if (!fileName.isEmpty())
+			saveConfigPathLineEditor->setText(fileName);
+	});
+
+	QObject::connect(saveConfigSaveButton, &QPushButton::clicked, [saveConfigPathLineEditor, saveConfigWindow]() {
+		if (saveConfigPathLineEditor->text().isEmpty()) {
+			QMessageBox::critical(nullptr, "Error", "File path is empty");
+			return;
+		}
+		if (globalTestConfig == nullptr) {
+			QMessageBox::critical(nullptr, "Error", "Config is empty");
+			return;
+		}
+		if (!globalTestConfig->saveToFile(saveConfigPathLineEditor->text())) {
+			QMessageBox::critical(nullptr, "Error", "Save failed");
+			return;
+		}
+		QMessageBox::information(nullptr, "Success", "Save success");
+		saveConfigWindow->hide();
+	});
+
+	saveConfigWindow->setLayout(saveConfigWindowLayout);
+	saveConfigWindow->setWindowTitle("Save Config");
+	saveConfigWindow->hide();
+
+	QObject::connect(configSaveButton, &QPushButton::clicked, saveConfigWindow, &QWidget::show);
+
+
+//	QObject::connect()
+
 
 	// passive setup
 	auto* passiveLabel = new QLabel("Passive Server");
