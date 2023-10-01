@@ -25,7 +25,7 @@ PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.get
 		listen(this->internal, testConfig.getSingleTestCount());
 }
 
-void PassiveServer::run() {
+void PassiveServer::start() {
 	this->thread = new std::thread([this]() {
 		while (true) {
 			if (this->shouldClose)
@@ -50,7 +50,7 @@ void PassiveServer::run() {
 	});
 }
 
-void PassiveServer::close() {
+void PassiveServer::stop() {
 	if (this->thread == nullptr)
 		return;
 	if (this->shouldClose)
@@ -63,8 +63,12 @@ void PassiveServer::close() {
 }
 
 PassiveServer::~PassiveServer() {
-	this->close();
+	this->stop();
 	delete[] this->buffer;
+}
+
+bool PassiveServer::checkConfig(TestConfig *testConfig) {
+	return testConfig->getDestinationPort() == this->port && testConfig->getTestNetworkType() == this->testNetworkType && testConfig->getCustomDataLength() == this->customDataLength;
 }
 
 

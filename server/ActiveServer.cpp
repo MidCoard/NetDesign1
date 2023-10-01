@@ -81,21 +81,26 @@ TestResults ActiveServer::test() {
 	return results;
 }
 
-void ActiveServer::close() const {
+bool ActiveServer::stop() const {
 	if (this->canClose) {
 		shutdown(client, SHUT_RDWR);
 		::close(client);
+		return true;
 	}
+	return false;
 }
 
 ActiveServer::~ActiveServer() {
+	while(!this->stop());
+	delete testConfig;
 	delete[] this->buffer;
 }
 
-bool ActiveServer::refreshTestConfig(TestConfig *testConfig) {
-	if (testConfig->getSourcePort() != testConfig->getSourcePort() || testConfig->getDestinationPort() != testConfig->getDestinationPort() ||
-	    testConfig->getTestNetworkType() != testConfig->getTestNetworkType() || testConfig->getDestinationAddress() != testConfig->getDestinationAddress())
+bool ActiveServer::refreshConfig(TestConfig *testConfig) {
+	if (this->testConfig->getSourcePort() != testConfig->getSourcePort() || this->testConfig->getDestinationPort() != testConfig->getDestinationPort() ||
+			this->testConfig->getTestNetworkType() != testConfig->getTestNetworkType() || this->testConfig->getDestinationAddress() != testConfig->getDestinationAddress())
 		return false;
+	delete this->testConfig;
 	this->testConfig = testConfig;
 	return true;
 }

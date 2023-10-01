@@ -28,9 +28,9 @@ public:
 
 	TestResults test();
 
-	void close() const;
+	bool stop() const;
 
-	bool refreshTestConfig(TestConfig* testConfig);
+	bool refreshConfig(TestConfig* testConfig);
 };
 
 

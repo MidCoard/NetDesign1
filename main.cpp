@@ -9,69 +9,28 @@
 #include <QMessageBox>
 #include <QFileSelector>
 #include "QFileDialog"
+#include "QThread"
 #include "TestConfig.h"
 #include "PassiveServer.h"
 #include "ActiveServer.h"
 #include "TestConfigConstructor.h"
+#include "PassiveServerStatus.h"
+#include "ActiveServerStatus.h"
+#include "TestResults.h"
 
-PassiveServer * passiveServer = nullptr;
+static PassiveServer * passiveServer = nullptr;
 
-ActiveServer * activeServer = nullptr;
+static ActiveServer * activeServer = nullptr;
 
 static TestConfig * globalTestConfig = nullptr;
 
 static TestConfigConstructor globalTestConfigConstructor;
 
-void close() {
-	if (activeServer != nullptr) {
-		activeServer->close();
-		delete activeServer;
-	}
-	if (passiveServer != nullptr) {
-		passiveServer->close();
-		delete passiveServer;
-	}
-}
+static PassiveServerStatus passiveServerStatus;
 
-TestConfig * createTestConfigByTerminal() {
-	unsigned int totalTestCount, singleTestCount;
-	std::cout << "Please input total test count: ";
-	std::cin >> totalTestCount;
-	std::cout << "Please input single test count: ";
-	std::cin >> singleTestCount;
-	unsigned int totalTestInterval, singleTestInterval;
-	std::cout << "Please input total test interval(us): ";
-	std::cin >> totalTestInterval;
-	std::cout << "Please input single test interval(us): ";
-	std::cin >> singleTestInterval;
-	unsigned short networkType;
-	std::cout << "Please input network type(0 for UDP, other for TCP): ";
-	std::cin >> networkType;
-	unsigned short sourcePort;
-	std::cout << "Please input source port: ";
-	std::cin >> sourcePort;
-	std::string destinationAddress;
-	std::cout << "Please input destination address: ";
-	std::cin >> destinationAddress;
-	unsigned short destinationPort;
-	std::cout << "Please input destination port: ";
-	std::cin >> destinationPort;
-	std::string customData;
-	std::cout << "Please input custom data: ";
-	std::cin >> customData;
-	unsigned char * customDataArray = new unsigned char[customData.length()];
-	for (int i = 0; i < customData.length(); i++) {
-		customDataArray[i] = customData[i];
-	}
-	return new TestConfig(singleTestCount, totalTestCount, std::chrono::microseconds(singleTestInterval),
-	                      std::chrono::microseconds(totalTestInterval), networkType == 0 ? tc::TestNetworkType::UDP : tc::TestNetworkType::TCP, sourcePort,
-	                      destinationAddress, destinationPort, customDataArray, customData.length());
-}
+static ActiveServerStatus activeServerStatus;
 
-TestConfig * createSimpleTestConfig() {
-	return new TestConfig(100, 1, std::chrono::microseconds(1000), std::chrono::microseconds(100000),
-	                      tc::TestNetworkType::UDP, 24001, "127.0.0.1", 24000, nullptr, 0);
-}
+static TestResults * currentTestResults;
 
 static std::initializer_list<QWidget *> addHorizontalWidgetsInVerticalLayout(QVBoxLayout * verticalLayout, std::initializer_list<QWidget *> widgets) {
 	auto* layout = new QHBoxLayout;
@@ -212,7 +171,7 @@ int main(int argc, char *argv[]) {
 		customDataEditor->setText(globalTestConfigConstructor.getCustomData());
 	});
 	auto* configConfirmButton = new QPushButton("Confirm Config");
-	QObject::connect(configConfirmButton, &QPushButton::clicked, [configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor, customDataEditor
+	QObject::connect(configConfirmButton, &QPushButton::clicked, [configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor
 																  ]() {
 		bool ok = true;
 
@@ -241,15 +200,26 @@ int main(int argc, char *argv[]) {
 			ok = false;
 
 		if (ok) {
-			QMessageBox::information(nullptr, "Success", "Config confirmed");
-			unsigned char* customData = nullptr;
-			if (!customDataEditor->text().isEmpty()) {
-				customData = new unsigned char[customDataEditor->text().length()];
-				for (int i = 0; i < customDataEditor->text().length(); ++i)
-					customData[i] = customDataEditor->text().at(i).toLatin1();
-			}
 			globalTestConfig = globalTestConfigConstructor.construct();
+			if (activeServer == nullptr) {
+				activeServer = new ActiveServer(globalTestConfig);
+				activeServerStatus.setStatus(as::Status::IDLE);
+			} else {
+				if (!activeServer->refreshConfig(globalTestConfig)) {
+					delete activeServer;
+					activeServer = new ActiveServer(globalTestConfig);
+					activeServerStatus.setStatus(as::Status::IDLE);
+				}
+				if (passiveServer != nullptr && !passiveServer->checkConfig(globalTestConfig)) {
+					QMessageBox::critical(nullptr, "Error", "Config confirmed but passive server need to restart");
+					passiveServerStatus.setStatus(ps::Status::RUNNING_WITH_ERROR);
+					configWindow->hide();
+					return;
+				}
+			}
+			QMessageBox::information(nullptr, "Success", "Config confirmed");
 			configWindow->hide();
+			return;
 		} else {
 			QMessageBox::critical(nullptr, "Error", "Config invalid");
 		}
@@ -310,6 +280,7 @@ int main(int argc, char *argv[]) {
 	auto* passiveLabel = new QLabel("Passive Server");
 	auto* passiveStartButton = new QPushButton("Start");
 	auto* passiveStopButton = new QPushButton("Stop");
+	passiveStopButton->setEnabled(false);
 	auto* passiveStatus = new QLabel("Status: Stopped");
 	auto* passiveLayout = new QHBoxLayout;
 	passiveLayout->addWidget(passiveLabel);
@@ -317,56 +288,77 @@ int main(int argc, char *argv[]) {
 	passiveLayout->addWidget(passiveStopButton);
 	passiveLayout->addWidget(passiveStatus);
 
+	QObject::connect(&passiveServerStatus, &PassiveServerStatus::statusChanged, passiveStatus, &QLabel::setText);
+
+	QObject::connect(&passiveServerStatus, &PassiveServerStatus::statusChanged, [passiveStartButton, passiveStopButton]() {
+		if (passiveServerStatus.getStatus() == ps::Status::RUNNING || passiveServerStatus.getStatus() == ps::Status::RUNNING_WITH_ERROR) {
+			passiveStartButton->setEnabled(false);
+			passiveStopButton->setEnabled(true);
+		} else {
+			passiveStartButton->setEnabled(true);
+			passiveStopButton->setEnabled(false);
+		}
+	});
+
+	QObject::connect(passiveStartButton, &QPushButton::clicked, []() {
+		if (globalTestConfig == nullptr) {
+			QMessageBox::critical(nullptr, "Error", "Config is empty");
+			return;
+		}
+		passiveServer = new PassiveServer(*globalTestConfig);
+		passiveServer->start();
+		passiveServerStatus.setStatus(ps::Status::RUNNING);
+	});
+
+	QObject::connect(passiveStopButton, &QPushButton::clicked, []() {
+		passiveServer->stop();
+		passiveServerStatus.setStatus(ps::Status::STOPPED);
+		delete passiveServer;
+		passiveServer = nullptr;
+	});
+
+	// active setup
+
+	auto* activeLabel = new QLabel("Test Client");
+	auto* activeTestButton = new QPushButton("Test");
+	auto* activeStatus = new QLabel("Status: Stopped");
+	auto* activeLayout = new QHBoxLayout;
+	activeLayout->addWidget(activeLabel);
+	activeLayout->addWidget(activeTestButton);
+	activeLayout->addWidget(activeStatus);
+
+	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, activeStatus, &QLabel::setText);
+
+
+	QObject::connect(activeTestButton, &QPushButton::clicked, []() {
+		if (activeServer == nullptr || globalTestConfig == nullptr) {
+			QMessageBox::critical(nullptr, "Error", "Config is empty");
+			return;
+		}
+		activeServerStatus.setStatus(as::Status::TESTING);
+		new std::thread([]() {
+			std::this_thread::sleep_for(std::chrono::milliseconds (500));
+			currentTestResults = new TestResults(activeServer->test());
+			activeServerStatus.setStatus(as::Status::TESTED);
+		});
+	});
+
+	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, []() {
+		if (activeServerStatus.getStatus() == as::Status::TESTED) {
+			QMessageBox::information(nullptr, "Success", "Test finished");
+			activeServerStatus.setStatus(as::Status::IDLE);
+		}
+	},Qt::QueuedConnection);
+
+
 	auto* mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(configLayout);
 	mainLayout->addLayout(passiveLayout);
+	mainLayout->addLayout(activeLayout);
 
 	mainWindow.setLayout(mainLayout);
 	mainWindow.show();
 	mainWindow.setWindowTitle("Network Design 1");
 
-
-	// config page
-
-
-
-
 	return QApplication::exec();
-//	TestConfig * testConfig = nullptr;
-//	while (true) {
-//		int op;
-//		std::cout << "Please input your operation: " << std::endl;
-//		std::cin >> op;
-//		if (op == -1) {
-//			delete testConfig;
-//			testConfig = createSimpleTestConfig();
-//		} else if (op == 0) {
-//			delete testConfig;
-//			testConfig = createTestConfigByTerminal();
-//		} else if (op == 1) {
-//			passiveServer = new PassiveServer(*testConfig);
-//			passiveServer->run();
-//		} else if (op == 2) {
-//			passiveServer->close();
-//			delete passiveServer;
-//		} else if (op == 3) {
-//			activeServer = new ActiveServer(testConfig);
-//		} else if (op == 4) {
-//			TestResults results = activeServer->test();
-//			for (int i = 0; i < testConfig->getTotalTestCount(); i ++) {
-//				std::cout << "Test " << i << " result: " << std::endl;
-//				for (int j = 0; j < testConfig->getSingleTestCount(); j++) {
-//					std::cout << "Case " << j << " result: " << results.get(i,j) << std::endl;
-//				}
-//				std::cout << "==========================================" << std::endl;
-//			}
-//		} else if (op == 5) {
-//			activeServer->close();
-//			delete activeServer;
-//		} else {
-//			close();
-//			delete testConfig;
-//			break;
-//		}
-//	}
 }

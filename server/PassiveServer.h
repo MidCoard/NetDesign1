@@ -29,9 +29,11 @@ public:
 
 	~PassiveServer();
 
-	void run();
+	void start();
 
-	void close();
+	void stop();
+
+	bool checkConfig(TestConfig * testConfig);
 };
 
 
