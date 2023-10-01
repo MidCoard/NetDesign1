@@ -7,6 +7,8 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QMessageBox>
+#include <QFileSelector>
+#include "QFileDialog"
 #include "TestConfig.h"
 #include "PassiveServer.h"
 #include "ActiveServer.h"
@@ -119,8 +121,23 @@ int main(int argc, char *argv[]) {
 	auto* configWindowLayout = new QVBoxLayout;
 	configWindow->setLayout(configWindowLayout);
 	configWindow->setWindowTitle("Config");
+	auto* configFileLabel = new QLabel("Path");
+	auto* configFilePathLineEditor = new QLineEdit;
+	auto* configFileSelectButton = new QPushButton("Select File");
 	auto* configLoadButton = new QPushButton("Load Config");
-	configWindowLayout->addWidget(configLoadButton);
+	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton, configLoadButton});
+
+	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
+		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.nd1)"));
+	});
+
+	QObject::connect(configLoadButton, &QPushButton::clicked, [configFilePathLineEditor]() {
+		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
+		if (!ok)
+			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
+	});
+
+
 	auto* totalCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Count(0-10000)").second;
 	totalCountEditor->setValidator(new QIntValidator(0, 10000));
 	QObject::connect(totalCountEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setTotalTestCount);

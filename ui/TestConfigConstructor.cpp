@@ -58,6 +58,10 @@ TestConfig *TestConfigConstructor::construct() {
 	return build();
 }
 
+bool TestConfigConstructor::loadFromFile(const QString& path) {
+
+}
+
 TestConfigConstructor::TestConfigConstructor() = default;
 
 TestConfigConstructor::~TestConfigConstructor() = default;

@@ -35,6 +35,8 @@ public:
 
 	TestConfig *construct();
 
+	bool loadFromFile(const QString& path);
+
 public slots:
 
 	void setTotalTestCount(const QString& q);
