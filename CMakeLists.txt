@@ -15,6 +15,8 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
 file(GLOB_RECURSE SOURCES "config/*.cpp" "server/*.cpp" "ui/*.cpp")
 
 include_directories(config server ui)
@@ -25,4 +27,4 @@ target_link_libraries(NetDesign1
         Qt::Core
         Qt::Gui
         Qt::Widgets
-        )
+        nlohmann_json::nlohmann_json)

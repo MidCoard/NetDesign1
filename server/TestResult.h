@@ -17,10 +17,11 @@ class TestResult {
 
 public:
 
-	TestResult(tr::TestResultType type, std::chrono::microseconds duration);
-
 	tr::TestResultType type;
 	std::chrono::microseconds duration;
+
+	TestResult(tr::TestResultType type, std::chrono::microseconds duration);
+
 };
 
 

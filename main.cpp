@@ -7,7 +7,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QMessageBox>
-#include <QFileSelector>
+#include <QTableWidget>
 #include "QFileDialog"
 #include "QThread"
 #include "TestConfig.h"
@@ -17,6 +17,8 @@
 #include "PassiveServerStatus.h"
 #include "ActiveServerStatus.h"
 #include "TestResults.h"
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 static PassiveServer * passiveServer = nullptr;
 
@@ -171,7 +173,9 @@ int main(int argc, char *argv[]) {
 		customDataEditor->setText(globalTestConfigConstructor.getCustomData());
 	});
 	auto* configConfirmButton = new QPushButton("Confirm Config");
-	QObject::connect(configConfirmButton, &QPushButton::clicked, [configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor
+
+	auto* testResultsTable = new QTableWidget;
+	QObject::connect(configConfirmButton, &QPushButton::clicked, [testResultsTable, configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor
 																  ]() {
 		bool ok = true;
 
@@ -217,6 +221,9 @@ int main(int argc, char *argv[]) {
 					return;
 				}
 			}
+			testResultsTable->clear();
+			testResultsTable->setRowCount(globalTestConfig->getTotalTestCount());
+			testResultsTable->setColumnCount(globalTestConfig->getSingleTestCount());
 			QMessageBox::information(nullptr, "Success", "Config confirmed");
 			configWindow->hide();
 			return;
@@ -338,27 +345,109 @@ int main(int argc, char *argv[]) {
 		activeServerStatus.setStatus(as::Status::TESTING);
 		new std::thread([]() {
 			std::this_thread::sleep_for(std::chrono::milliseconds (500));
+			delete currentTestResults;
 			currentTestResults = new TestResults(activeServer->test());
 			activeServerStatus.setStatus(as::Status::TESTED);
 		});
 	});
 
-	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, []() {
+	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, [testResultsTable]() {
 		if (activeServerStatus.getStatus() == as::Status::TESTED) {
 			QMessageBox::information(nullptr, "Success", "Test finished");
 			activeServerStatus.setStatus(as::Status::IDLE);
+			testResultsTable->clear();
+			for (int i = 0; i < globalTestConfig->getTotalTestCount(); i++)
+				for (int j = 0; j < globalTestConfig->getSingleTestCount(); j++)
+					testResultsTable->setItem(i, j, new QTableWidgetItem(QString::number(currentTestResults->get(i, j).duration.count())));
 		}
 	},Qt::QueuedConnection);
+
+	// export setup
+
+	auto* exportAllButton = new QPushButton("Export");
+	auto* exportDurationButton = new QPushButton("Export Duration");
+	auto* exportLayout = new QHBoxLayout;
+	exportLayout->addWidget(exportAllButton);
+	exportLayout->addWidget(exportDurationButton);
+
+	// export all window setup
+
+	auto* exportAllWindow = new QWidget;
+	auto* exportAllWindowLayout = new QHBoxLayout;
+	auto* exportAllPathLineEditor = new QLineEdit;
+	auto* exportAllPathButton = new QPushButton("Select File");
+
+	QObject::connect(exportAllPathButton, &QPushButton::clicked, [exportAllPathLineEditor]() {
+		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
+		if (!fileName.isEmpty())
+			exportAllPathLineEditor->setText(fileName);
+	});
+
+	auto* exportAllSaveButton = new QPushButton("Export");
+
+	QObject::connect(exportAllSaveButton, &QPushButton::clicked, [exportAllWindow]() {
+
+		exportAllWindow->hide();
+	});
+
+	exportAllWindowLayout->addWidget(exportAllPathLineEditor);
+	exportAllWindowLayout->addWidget(exportAllPathButton);
+	exportAllWindowLayout->addWidget(exportAllSaveButton);
+	exportAllWindow->setLayout(exportAllWindowLayout);
+	exportAllWindow->setWindowTitle("Export All");
+	exportAllWindow->hide();
+
+	QObject::connect(exportAllButton, &QPushButton::clicked, [exportAllWindow]() {
+		if (currentTestResults == nullptr) {
+			QMessageBox::critical(nullptr, "Error", "No test results");
+			return;
+		}
+		exportAllWindow->show();
+	});
+
+	// export duration window setup
+
+	auto* exportDurationWindow = new QWidget;
+	auto* exportDurationWindowLayout = new QHBoxLayout;
+	auto* exportDurationPathLineEditor = new QLineEdit;
+	auto* exportDurationPathButton = new QPushButton("Select File");
+
+	QObject::connect(exportDurationPathButton, &QPushButton::clicked, [exportDurationPathLineEditor]() {
+		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
+		if (!fileName.isEmpty())
+			exportDurationPathLineEditor->setText(fileName);
+	});
+
+	auto* exportDurationSaveButton = new QPushButton("Export");
+	exportDurationWindowLayout->addWidget(exportDurationPathLineEditor);
+	exportDurationWindowLayout->addWidget(exportDurationPathButton);
+	exportDurationWindowLayout->addWidget(exportDurationSaveButton);
+	exportDurationWindow->setLayout(exportDurationWindowLayout);
+	exportDurationWindow->setWindowTitle("Export Duration");
+	exportDurationWindow->hide();
+
+	QObject::connect(exportDurationButton, &QPushButton::clicked, [exportDurationWindow]() {
+		if (currentTestResults == nullptr) {
+			QMessageBox::critical(nullptr, "Error", "No test results");
+			return;
+		}
+		exportDurationWindow->show();
+	});
 
 
 	auto* mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(configLayout);
 	mainLayout->addLayout(passiveLayout);
 	mainLayout->addLayout(activeLayout);
+	mainLayout->addWidget(testResultsTable);
+	mainLayout->addLayout(exportLayout);
 
 	mainWindow.setLayout(mainLayout);
 	mainWindow.show();
 	mainWindow.setWindowTitle("Network Design 1");
-
-	return QApplication::exec();
+	int r = QApplication::exec();
+	delete passiveServer;
+	delete activeServer;
+	delete currentTestResults;
+	return r;
 }
