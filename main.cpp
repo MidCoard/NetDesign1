@@ -19,6 +19,7 @@
 #include "TestResults.h"
 #include <fstream>
 #include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 static PassiveServer * passiveServer = nullptr;
 
@@ -385,9 +386,22 @@ int main(int argc, char *argv[]) {
 
 	auto* exportAllSaveButton = new QPushButton("Export");
 
-	QObject::connect(exportAllSaveButton, &QPushButton::clicked, [exportAllWindow]() {
-
-		exportAllWindow->hide();
+	QObject::connect(exportAllSaveButton, &QPushButton::clicked, [exportAllWindow, exportAllPathLineEditor]() {
+		QFile file(exportAllPathLineEditor->text());
+		if (!file.open(QIODevice::WriteOnly)) {
+			QMessageBox::critical(nullptr, "Error", "File open failed");
+			return;
+		}
+		QTextStream stream(&file);
+		stream << currentTestResults->toJson().dump(4).c_str();
+		file.close();
+		if (file.error() != QFile::NoError || stream.status() != QTextStream::Ok) {
+			QMessageBox::critical(nullptr, "Error", "File write failed");
+			return;
+		} else {
+			QMessageBox::information(nullptr, "Success", "Export finished");
+			exportAllWindow->hide();
+		}
 	});
 
 	exportAllWindowLayout->addWidget(exportAllPathLineEditor);
@@ -419,6 +433,25 @@ int main(int argc, char *argv[]) {
 	});
 
 	auto* exportDurationSaveButton = new QPushButton("Export");
+
+	QObject::connect(exportDurationSaveButton, &QPushButton::clicked, [exportDurationWindow, exportDurationPathLineEditor]() {
+		QFile file(exportDurationPathLineEditor->text());
+		if (!file.open(QIODevice::WriteOnly)) {
+			QMessageBox::critical(nullptr, "Error", "File open failed");
+			return;
+		}
+		QTextStream stream(&file);
+		stream << currentTestResults->toJsonWithDuration().dump(4).c_str();
+		file.close();
+		if (file.error() != QFile::NoError || stream.status() != QTextStream::Ok) {
+			QMessageBox::critical(nullptr, "Error", "File write failed");
+			return;
+		} else {
+			QMessageBox::information(nullptr, "Success", "Export finished");
+			exportDurationWindow->hide();
+		}
+	});
+
 	exportDurationWindowLayout->addWidget(exportDurationPathLineEditor);
 	exportDurationWindowLayout->addWidget(exportDurationPathButton);
 	exportDurationWindowLayout->addWidget(exportDurationSaveButton);

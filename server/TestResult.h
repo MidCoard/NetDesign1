@@ -22,6 +22,8 @@ public:
 
 	TestResult(tr::TestResultType type, std::chrono::microseconds duration);
 
+	std::string getTypeAsString() const;
+
 };
 
 
