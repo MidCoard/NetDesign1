@@ -352,14 +352,27 @@ int main(int argc, char *argv[]) {
 		});
 	});
 
+	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, [activeTestButton]() {
+		if (activeServerStatus.getStatus() == as::Status::TESTING)
+			activeTestButton->setEnabled(false);
+		else
+			activeTestButton->setEnabled(true);
+	});
+
 	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, [testResultsTable]() {
 		if (activeServerStatus.getStatus() == as::Status::TESTED) {
 			QMessageBox::information(nullptr, "Success", "Test finished");
 			activeServerStatus.setStatus(as::Status::IDLE);
 			testResultsTable->clear();
 			for (int i = 0; i < globalTestConfig->getTotalTestCount(); i++)
-				for (int j = 0; j < globalTestConfig->getSingleTestCount(); j++)
-					testResultsTable->setItem(i, j, new QTableWidgetItem(QString::number(currentTestResults->get(i, j).duration.count())));
+				for (int j = 0; j < globalTestConfig->getSingleTestCount(); j++) {
+					if (currentTestResults->get(i,j).type == tr::TestResultType::NO_ERROR)
+						testResultsTable->setItem(i, j, new QTableWidgetItem(
+							QString::number(currentTestResults->get(i, j).duration.count())));
+					else testResultsTable->setItem(i, j, new QTableWidgetItem(
+						QString::fromStdString(currentTestResults->get(i, j).getTypeAsString())
+							));
+				}
 		}
 	},Qt::QueuedConnection);
 

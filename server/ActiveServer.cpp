@@ -10,6 +10,13 @@ ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
 		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
 	if (setsockopt(client, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option)) == -1)
 		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	struct timeval timeout{};
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+	if (setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	if (setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
 	if (testConfig->getSourcePort() != 0) {
 		struct sockaddr_in clientAddr{};
 		clientAddr.sin_family = AF_INET;
