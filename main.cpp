@@ -19,6 +19,7 @@
 #include "TestResults.h"
 #include <nlohmann/json.hpp>
 #include "config.h"
+#include <tuple>
 
 using json = nlohmann::json;
 
@@ -140,7 +141,7 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 		customDataLengthEditor->setText(globalTestConfigConstructor.getCustomDataLength());
 	});
 	auto* customDataClearButton = new QPushButton("Clear");
-	auto* customDataEditor = get<1>(addHorizontalTextEditorWidgetInVerticalLayout(configWindowLayout, "Custom Data", customDataClearButton));
+	auto* customDataEditor = std::get<1>(addHorizontalTextEditorWidgetInVerticalLayout(configWindowLayout, "Custom Data", customDataClearButton));
 	QObject::connect(customDataClearButton, &QPushButton::clicked, [customDataEditor]() {
 		customDataEditor->setText("");
 	});
