@@ -8,6 +8,9 @@
 #include <sys/socket.h>
 #include "QString"
 #include <nlohmann/json.hpp>
+#include "config.h"
+#include "QFile"
+#include "QTextStream"
 
 
 using json = nlohmann::json;
