@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <thread>
 #include <unistd.h>
+#include <sys/fcntl.h>
 
 class PassiveServer {
 private:
