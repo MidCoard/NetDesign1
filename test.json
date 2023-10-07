@@ -1,0 +1,12 @@
+{
+    "customData": "1234556789abcd!@#",
+    "customDataLength": 17,
+    "destinationAddress": "127.0.0.1",
+    "destinationPort": 23456,
+    "singleTestCount": 3,
+    "singleTestInterval": 100,
+    "sourcePort": 0,
+    "testNetworkType": 0,
+    "totalTestCount": 3,
+    "totalTestInterval": 10000
+}

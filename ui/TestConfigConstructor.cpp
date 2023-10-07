@@ -1,4 +1,6 @@
 #include <QFile>
+#include <QTextStream>
+#include <fstream>
 #include "TestConfigConstructor.h"
 #include "iostream"
 
@@ -59,29 +61,31 @@ TestConfig *TestConfigConstructor::construct() {
 }
 
 bool TestConfigConstructor::loadFromFile(const QString& path) {
-	QFile file(path);
-	if (!file.open(QIODevice::ReadOnly))
-		return false;
-	QDataStream stream(&file);
-	stream >> this->singleTestCount;
-	stream >> this->totalTestCount;
-	long long tmp;
-	stream >> tmp;
-	this->singleTestInterval = std::chrono::microseconds(tmp);
-	stream >> tmp;
-	this->totalTestInterval = std::chrono::microseconds(tmp);
-	int tmp1;
-	stream >> tmp1;
-	this->testNetworkType = (tc::TestNetworkType) tmp1;
-	stream >> this->sourcePort;
-	QString tmp2;
-	stream >> tmp2;
-	this->destinationAddress = tmp2.toStdString();
-	stream >> this->destinationPort;
-	stream >> this->customData;
-	this->customDataLength = this->customData.length();
-	if (file.error() != QFile::NoError || stream.status() != QDataStream::Ok)
-		return false;
+    std::ifstream stream(path.toStdString());
+    if (!stream.is_open()) return false;
+
+    json rawJson;
+    stream >> rawJson;
+
+    std::uint64_t singleTestIntVal;
+    std::uint64_t totalTestIntVal;
+    std::string customDataString;
+
+    rawJson.at("singleTestCount").get_to(this->singleTestCount);
+    rawJson.at("totalTestCount").get_to(this->totalTestCount);
+    rawJson.at("singleTestInterval").get_to(singleTestIntVal);
+    rawJson.at("totalTestInterval").get_to(totalTestIntVal);
+    rawJson.at("testNetworkType").get_to(this->testNetworkType);
+    rawJson.at("sourcePort").get_to(this->sourcePort);
+    rawJson.at("destinationAddress").get_to(this->destinationAddress);
+    rawJson.at("destinationPort").get_to(this->destinationPort);
+    rawJson.at("customData").get_to(customDataString);
+    rawJson.at("customDataLength").get_to(this->customDataLength);
+
+    this->singleTestInterval = std::chrono::microseconds(singleTestIntVal);
+    this->totalTestInterval = std::chrono::microseconds(totalTestIntVal);
+    this->customData = QString::fromStdString(customDataString);
+
 	emitEvent();
 	return true;
 }

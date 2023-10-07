@@ -78,7 +78,7 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton});
 
 	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
-		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.nd1)"));
+		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.json)"));
 		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
 		if (!ok)
 			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
@@ -238,8 +238,9 @@ auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
 	saveConfigWindowLayout->addWidget(saveConfigPathLineEditor);
 	saveConfigWindowLayout->addWidget(saveConfigFileSelectButton);
 
+
 	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigWindow, saveConfigPathLineEditor]() {
-		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.nd1)");
+		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.json)");
 		if (!fileName.isEmpty())
 			saveConfigPathLineEditor->setText(fileName);
 		if (saveConfigPathLineEditor->text().isEmpty()) {

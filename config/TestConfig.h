@@ -7,9 +7,10 @@
 #include <string_view>
 #include <sys/socket.h>
 #include "QString"
-#include <QFile>
-#include "config.h"
+#include <nlohmann/json.hpp>
 
+
+using json = nlohmann::json;
 
 namespace tc {
 
@@ -79,8 +80,9 @@ public:
 
 	unsigned int getCustomDataLength() const;
 
-	bool saveToFile(const QString& path);
+    json toJson();
 
+	bool saveToFile(const QString& path);
 
 };
 
