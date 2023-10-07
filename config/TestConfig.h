@@ -7,6 +7,8 @@
 #include <string_view>
 #include <sys/socket.h>
 #include "QString"
+#include <QFile>
+#include "config.h"
 
 
 namespace tc {

@@ -34,16 +34,18 @@ void PassiveServer::start() {
 				int client = accept(this->internal, (struct sockaddr *) &addr, &addrlen);
 				if (client == -1)
 					continue;
-				unsigned int length;
-				while (!this->shouldClose) {
-					length = recv(client, this->buffer, customDataLength, MSG_DONTWAIT);
-					if (length != -1)
-						write(client, this->buffer, length);
-					else if (errno != 0x23)
-						break;
-				}
-				shutdown(client, SHUT_RDWR);
-				::close(client);
+				this->threads.emplace_back([this, client]() {
+					unsigned int length;
+					while (!this->shouldClose) {
+						length = recv(client, this->buffer, customDataLength, MSG_DONTWAIT);
+						if (length != -1)
+							write(client, this->buffer, length);
+						else if (errno != 0x23)
+							break;
+					}
+					shutdown(client, SHUT_RDWR);
+					::close(client);
+				});
 			} else {
 				unsigned int length = recvfrom(this->internal, this->buffer, customDataLength, 0, (struct sockaddr *) &addr, &addrlen);
 				if (length != 0)
@@ -61,6 +63,8 @@ void PassiveServer::stop() {
 	::close(this->internal);
 	this->shouldClose = true;
 	this->thread->join();
+	for (auto &thread : this->threads)
+		thread.join();
 	delete this->thread;
 	this->thread = nullptr;
 }

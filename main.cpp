@@ -17,9 +17,8 @@
 #include "PassiveServerStatus.h"
 #include "ActiveServerStatus.h"
 #include "TestResults.h"
-#include <fstream>
 #include <nlohmann/json.hpp>
-#include <csignal>
+#include "config.h"
 
 using json = nlohmann::json;
 
@@ -134,8 +133,8 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [destinationPortEditor]() {
 		destinationPortEditor->setText(globalTestConfigConstructor.getDestinationPort());
 	});
-	auto* customDataLengthEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-1024)").second;
-	customDataLengthEditor->setValidator(new QIntValidator(0, 1024));
+	auto* customDataLengthEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-" + QString::number(TEST_SIZE) + ")").second;
+	customDataLengthEditor->setValidator(new QIntValidator(0, TEST_SIZE));
 	QObject::connect(customDataLengthEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setCustomDataLength);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [customDataLengthEditor]() {
 		customDataLengthEditor->setText(globalTestConfigConstructor.getCustomDataLength());
@@ -185,7 +184,7 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 		if (destinationPortEditor->text().isEmpty() || destinationPortEditor->text().toInt() > 65535)
 			ok = false;
 
-		if (customDataLengthEditor->text().isEmpty() || customDataLengthEditor->text().toInt() > 1024)
+		if (customDataLengthEditor->text().isEmpty() || customDataLengthEditor->text().toInt() > TEST_SIZE)
 			ok = false;
 
 		if (ok) {
@@ -232,6 +231,7 @@ auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
 	auto* saveConfigWindow = new QWidget;
 
 	auto* saveConfigPathLineEditor = new QLineEdit;
+	saveConfigPathLineEditor->setReadOnly(true);
 	auto* saveConfigFileSelectButton = new QPushButton("Select File");
 
 	auto* saveConfigWindowLayout = new QHBoxLayout;
