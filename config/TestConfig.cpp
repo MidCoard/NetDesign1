@@ -1,11 +1,9 @@
-#include <QFile>
-#include <QTextStream>
 #include "TestConfig.h"
 
 static std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
 
 static unsigned int generateCustomDataLength() {
-	std::uniform_int_distribution<int> distribution(1,1024);
+	std::uniform_int_distribution<int> distribution(1, TEST_SIZE);
 	return distribution(generator);
 }
 

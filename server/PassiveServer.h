@@ -7,6 +7,7 @@
 #include <thread>
 #include <unistd.h>
 #include <sys/fcntl.h>
+#include "config.h"
 
 class PassiveServer {
 private:
@@ -21,6 +22,7 @@ private:
 	unsigned char *buffer;
 
 	std::thread *thread = nullptr;
+	std::vector<std::thread> threads;
 
 	volatile bool shouldClose = false;
 

@@ -1,13 +1,5 @@
 #include "PassiveServer.h"
 
-static void enableNonBlockingSocket(int socket) {
-	int flags = fcntl(socket, F_GETFL, 0);
-	if (flags == -1)
-		throw std::runtime_error("Failed to get socket flags");
-	if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) == -1)
-		throw std::runtime_error("Failed to set socket flags");
-}
-
 PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.getDestinationPort()), testNetworkType(testConfig.getTestNetworkType()), customDataLength(testConfig.getCustomDataLength()) {
 	this->internal = socket(AF_INET, tc::convertNetworkType(testNetworkType), 0);
 	if (this->internal == -1)
@@ -27,10 +19,8 @@ PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.get
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(this->internal, (struct sockaddr *) &addr, sizeof(addr)) == -1)
 		throw std::runtime_error("Failed to bind socket at port " + std::to_string(port));
-	if (testNetworkType == tc::TestNetworkType::TCP) {
+	if (testNetworkType == tc::TestNetworkType::TCP)
 		listen(this->internal, testConfig.getSingleTestCount());
-		enableNonBlockingSocket(this->internal);
-	}
 }
 
 void PassiveServer::start() {
@@ -44,15 +34,18 @@ void PassiveServer::start() {
 				int client = accept(this->internal, (struct sockaddr *) &addr, &addrlen);
 				if (client == -1)
 					continue;
-				unsigned int length;
-				while (!this->shouldClose) {
-					length = read(client, this->buffer, customDataLength);
-					if (length != -1)
-						write(client, this->buffer, length);
-					else break;
-				}
-				shutdown(client, SHUT_RDWR);
-				::close(client);
+				this->threads.emplace_back([this, client]() {
+					unsigned int length;
+					while (!this->shouldClose) {
+						length = recv(client, this->buffer, customDataLength, MSG_DONTWAIT);
+						if (length != -1)
+							write(client, this->buffer, length);
+						else if (errno != 0x23)
+							break;
+					}
+					shutdown(client, SHUT_RDWR);
+					::close(client);
+				});
 			} else {
 				unsigned int length = recvfrom(this->internal, this->buffer, customDataLength, 0, (struct sockaddr *) &addr, &addrlen);
 				if (length != 0)
@@ -70,6 +63,8 @@ void PassiveServer::stop() {
 	::close(this->internal);
 	this->shouldClose = true;
 	this->thread->join();
+	for (auto &thread : this->threads)
+		thread.join();
 	delete this->thread;
 	this->thread = nullptr;
 }

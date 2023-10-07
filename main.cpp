@@ -17,8 +17,9 @@
 #include "PassiveServerStatus.h"
 #include "ActiveServerStatus.h"
 #include "TestResults.h"
-#include <fstream>
 #include <nlohmann/json.hpp>
+#include "config.h"
+
 using json = nlohmann::json;
 
 static PassiveServer * passiveServer = nullptr;
@@ -72,15 +73,12 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	configWindow->setWindowTitle("Config");
 	auto* configFileLabel = new QLabel("Path");
 	auto* configFilePathLineEditor = new QLineEdit;
+	configFilePathLineEditor->setReadOnly(true);
 	auto* configFileSelectButton = new QPushButton("Select File");
-	auto* configLoadButton = new QPushButton("Load Config");
-	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton, configLoadButton});
+	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton});
 
 	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
 		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.json)"));
-	});
-
-	QObject::connect(configLoadButton, &QPushButton::clicked, [configFilePathLineEditor]() {
 		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
 		if (!ok)
 			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
@@ -135,8 +133,8 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [destinationPortEditor]() {
 		destinationPortEditor->setText(globalTestConfigConstructor.getDestinationPort());
 	});
-	auto* customDataLengthEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-1024)").second;
-	customDataLengthEditor->setValidator(new QIntValidator(0, 1024));
+	auto* customDataLengthEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Custom Data Length(0-" + QString::number(TEST_SIZE) + ")").second;
+	customDataLengthEditor->setValidator(new QIntValidator(0, TEST_SIZE));
 	QObject::connect(customDataLengthEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setCustomDataLength);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [customDataLengthEditor]() {
 		customDataLengthEditor->setText(globalTestConfigConstructor.getCustomDataLength());
@@ -186,7 +184,7 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 		if (destinationPortEditor->text().isEmpty() || destinationPortEditor->text().toInt() > 65535)
 			ok = false;
 
-		if (customDataLengthEditor->text().isEmpty() || customDataLengthEditor->text().toInt() > 1024)
+		if (customDataLengthEditor->text().isEmpty() || customDataLengthEditor->text().toInt() > TEST_SIZE)
 			ok = false;
 
 		if (ok) {
@@ -210,7 +208,6 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 			testResultsTable->clear();
 			testResultsTable->setRowCount(globalTestConfig->getTotalTestCount());
 			testResultsTable->setColumnCount(globalTestConfig->getSingleTestCount());
-			QMessageBox::information(nullptr, "Success", "Config confirmed");
 			configWindow->hide();
 			return;
 		} else {
@@ -234,21 +231,18 @@ auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
 	auto* saveConfigWindow = new QWidget;
 
 	auto* saveConfigPathLineEditor = new QLineEdit;
+	saveConfigPathLineEditor->setReadOnly(true);
 	auto* saveConfigFileSelectButton = new QPushButton("Select File");
-	auto* saveConfigSaveButton = new QPushButton("Save Config");
 
 	auto* saveConfigWindowLayout = new QHBoxLayout;
 	saveConfigWindowLayout->addWidget(saveConfigPathLineEditor);
 	saveConfigWindowLayout->addWidget(saveConfigFileSelectButton);
-	saveConfigWindowLayout->addWidget(saveConfigSaveButton);
 
-	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigPathLineEditor]() {
+
+	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigWindow, saveConfigPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.json)");
 		if (!fileName.isEmpty())
 			saveConfigPathLineEditor->setText(fileName);
-	});
-
-	QObject::connect(saveConfigSaveButton, &QPushButton::clicked, [saveConfigPathLineEditor, saveConfigWindow]() {
 		if (saveConfigPathLineEditor->text().isEmpty()) {
 			QMessageBox::critical(nullptr, "Error", "File path is empty");
 			return;
@@ -357,7 +351,6 @@ auto* setupActive(QTableWidget* testResultsTable) {
 
 	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, [testResultsTable]() {
 		if (activeServerStatus.getStatus() == as::Status::TESTED) {
-			QMessageBox::information(nullptr, "Success", "Test finished");
 			activeServerStatus.setStatus(as::Status::IDLE);
 			testResultsTable->clear();
 			for (int i = 0; i < globalTestConfig->getTotalTestCount(); i++)
@@ -385,17 +378,13 @@ auto* setupExport() {
 	auto* exportAllWindow = new QWidget;
 	auto* exportAllWindowLayout = new QHBoxLayout;
 	auto* exportAllPathLineEditor = new QLineEdit;
+	exportAllPathLineEditor->setReadOnly(true);
 	auto* exportAllPathButton = new QPushButton("Select File");
 
-	QObject::connect(exportAllPathButton, &QPushButton::clicked, [exportAllPathLineEditor]() {
+	QObject::connect(exportAllPathButton, &QPushButton::clicked, [exportAllWindow, exportAllPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
 		if (!fileName.isEmpty())
 			exportAllPathLineEditor->setText(fileName);
-	});
-
-	auto* exportAllSaveButton = new QPushButton("Export");
-
-	QObject::connect(exportAllSaveButton, &QPushButton::clicked, [exportAllWindow, exportAllPathLineEditor]() {
 		QFile file(exportAllPathLineEditor->text());
 		if (!file.open(QIODevice::WriteOnly)) {
 			QMessageBox::critical(nullptr, "Error", "File open failed");
@@ -415,7 +404,6 @@ auto* setupExport() {
 
 	exportAllWindowLayout->addWidget(exportAllPathLineEditor);
 	exportAllWindowLayout->addWidget(exportAllPathButton);
-	exportAllWindowLayout->addWidget(exportAllSaveButton);
 	exportAllWindow->setLayout(exportAllWindowLayout);
 	exportAllWindow->setWindowTitle("Export All");
 	exportAllWindow->hide();
@@ -431,17 +419,13 @@ auto* setupExport() {
 	auto* exportDurationWindow = new QWidget;
 	auto* exportDurationWindowLayout = new QHBoxLayout;
 	auto* exportDurationPathLineEditor = new QLineEdit;
+	exportDurationPathLineEditor->setReadOnly(true);
 	auto* exportDurationPathButton = new QPushButton("Select File");
 
-	QObject::connect(exportDurationPathButton, &QPushButton::clicked, [exportDurationPathLineEditor]() {
+	QObject::connect(exportDurationPathButton, &QPushButton::clicked, [exportDurationWindow, exportDurationPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
 		if (!fileName.isEmpty())
 			exportDurationPathLineEditor->setText(fileName);
-	});
-
-	auto* exportDurationSaveButton = new QPushButton("Export");
-
-	QObject::connect(exportDurationSaveButton, &QPushButton::clicked, [exportDurationWindow, exportDurationPathLineEditor]() {
 		QFile file(exportDurationPathLineEditor->text());
 		if (!file.open(QIODevice::WriteOnly)) {
 			QMessageBox::critical(nullptr, "Error", "File open failed");
@@ -461,7 +445,6 @@ auto* setupExport() {
 
 	exportDurationWindowLayout->addWidget(exportDurationPathLineEditor);
 	exportDurationWindowLayout->addWidget(exportDurationPathButton);
-	exportDurationWindowLayout->addWidget(exportDurationSaveButton);
 	exportDurationWindow->setLayout(exportDurationWindowLayout);
 	exportDurationWindow->setWindowTitle("Export Duration");
 	exportDurationWindow->hide();
