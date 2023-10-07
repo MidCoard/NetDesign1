@@ -65,20 +65,7 @@ static std::tuple<QLabel*, QLineEdit*, QWidget*> addHorizontalTextEditorWidgetIn
 	return {label, editor, widget};
 }
 
-int main(int argc, char *argv[]) {
-	QApplication a(argc, argv);
-	QWidget mainWindow;
-	// config setup
-	auto* configLabel = new QLabel("Global Config");
-	auto* configButton = new QPushButton("Config");
-	auto* configSaveButton = new QPushButton("Save Config");
-	auto* configLayout = new QHBoxLayout;
-	configLayout->addWidget(configLabel);
-	configLayout->addWidget(configButton);
-	configLayout->addWidget(configSaveButton);
-
-	// config window setup
-
+auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTable) {
 	auto* configWindow = new QWidget;
 	auto* configWindowLayout = new QVBoxLayout;
 	configWindow->setLayout(configWindowLayout);
@@ -98,7 +85,6 @@ int main(int argc, char *argv[]) {
 		if (!ok)
 			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
 	});
-
 
 	auto* totalCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Count(0-10000)").second;
 	totalCountEditor->setValidator(new QIntValidator(0, 10000));
@@ -175,10 +161,8 @@ int main(int argc, char *argv[]) {
 	});
 	auto* configConfirmButton = new QPushButton("Confirm Config");
 
-	auto* testResultsTable = new QTableWidget;
-	testResultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	QObject::connect(configConfirmButton, &QPushButton::clicked, [testResultsTable, configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor
-																  ]() {
+	]() {
 		bool ok = true;
 
 		if (totalCountEditor->text().isEmpty() || totalCountEditor->text().toInt() > 10000)
@@ -243,8 +227,11 @@ int main(int argc, char *argv[]) {
 		configWindow->show();
 	});
 
-	// config save window
-	QWidget* saveConfigWindow = new QWidget;
+	return configWindow;
+}
+
+auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
+	auto* saveConfigWindow = new QWidget;
 
 	auto* saveConfigPathLineEditor = new QLineEdit;
 	auto* saveConfigFileSelectButton = new QPushButton("Select File");
@@ -284,8 +271,10 @@ int main(int argc, char *argv[]) {
 
 	QObject::connect(configSaveButton, &QPushButton::clicked, saveConfigWindow, &QWidget::show);
 
+	return saveConfigWindow;
+}
 
-	// passive setup
+auto* setupPassive() {
 	auto* passiveLabel = new QLabel("Passive Server");
 	auto* passiveStartButton = new QPushButton("Start");
 	auto* passiveStopButton = new QPushButton("Stop");
@@ -336,8 +325,10 @@ int main(int argc, char *argv[]) {
 		passiveServer = nullptr;
 	});
 
-	// active setup
+	return passiveLayout;
+}
 
+auto* setupActive(QTableWidget* testResultsTable) {
 	auto* activeLabel = new QLabel("Test Client");
 	auto* activeTestButton = new QPushButton("Test");
 	auto* activeStatus = new QLabel("Status: Stopped");
@@ -379,23 +370,23 @@ int main(int argc, char *argv[]) {
 				for (int j = 0; j < globalTestConfig->getSingleTestCount(); j++) {
 					if (currentTestResults->get(i,j).type == tr::TestResultType::NO_ERROR)
 						testResultsTable->setItem(i, j, new QTableWidgetItem(
-							QString::number(currentTestResults->get(i, j).duration.count())));
+								QString::number(currentTestResults->get(i, j).duration.count())));
 					else testResultsTable->setItem(i, j, new QTableWidgetItem(
-						QString::fromStdString(currentTestResults->get(i, j).getTypeAsString())
-							));
+								QString::fromStdString(currentTestResults->get(i, j).getTypeAsString())
+						));
 				}
 		}
 	},Qt::QueuedConnection);
 
-	// export setup
+	return activeLayout;
+}
 
+auto* setupExport() {
 	auto* exportAllButton = new QPushButton("Export");
 	auto* exportDurationButton = new QPushButton("Export Duration");
 	auto* exportLayout = new QHBoxLayout;
 	exportLayout->addWidget(exportAllButton);
 	exportLayout->addWidget(exportDurationButton);
-
-	// export all window setup
 
 	auto* exportAllWindow = new QWidget;
 	auto* exportAllWindowLayout = new QHBoxLayout;
@@ -443,8 +434,6 @@ int main(int argc, char *argv[]) {
 		exportAllWindow->show();
 	});
 
-	// export duration window setup
-
 	auto* exportDurationWindow = new QWidget;
 	auto* exportDurationWindowLayout = new QHBoxLayout;
 	auto* exportDurationPathLineEditor = new QLineEdit;
@@ -491,6 +480,29 @@ int main(int argc, char *argv[]) {
 		exportDurationWindow->show();
 	});
 
+	return exportLayout;
+}
+
+int main(int argc, char *argv[]) {
+	QApplication a(argc, argv);
+	QWidget mainWindow;
+
+	auto* configLabel = new QLabel("Global Config");
+	auto* configButton = new QPushButton("Config");
+	auto* configSaveButton = new QPushButton("Save Config");
+	auto* configLayout = new QHBoxLayout;
+	configLayout->addWidget(configLabel);
+	configLayout->addWidget(configButton);
+	configLayout->addWidget(configSaveButton);
+
+	auto* testResultsTable = new QTableWidget;
+	testResultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+	setupConfigWindow(configButton, testResultsTable);
+	setupSaveConfigWindow(configSaveButton);
+	auto* passiveLayout = setupPassive();
+	auto* activeLayout = setupActive(testResultsTable);
+	auto* exportLayout = setupExport();
 
 	auto* mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(configLayout);
@@ -499,9 +511,11 @@ int main(int argc, char *argv[]) {
 	mainLayout->addWidget(testResultsTable);
 	mainLayout->addLayout(exportLayout);
 
+
 	mainWindow.setLayout(mainLayout);
 	mainWindow.show();
 	mainWindow.setWindowTitle("Network Design 1");
+
 	int r = QApplication::exec();
 	delete passiveServer;
 	delete activeServer;
