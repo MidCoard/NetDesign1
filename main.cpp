@@ -313,12 +313,6 @@ auto* setupPassive() {
 	});
 
 	QObject::connect(passiveStopButton, &QPushButton::clicked, []() {
-		if (passiveServer->getTestNetworkType() == tc::TestNetworkType ::TCP) {
-			activeServer->stop();
-			delete activeServer;
-			activeServer = nullptr;
-			activeServerStatus.setStatus(as::Status::STOPPED);
-		}
 		passiveServer->stop();
 		passiveServerStatus.setStatus(ps::Status::STOPPED);
 		delete passiveServer;
