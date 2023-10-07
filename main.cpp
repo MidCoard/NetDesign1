@@ -77,7 +77,7 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton, configLoadButton});
 
 	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
-		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.nd1)"));
+		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.json)"));
 	});
 
 	QObject::connect(configLoadButton, &QPushButton::clicked, [configFilePathLineEditor]() {
@@ -243,7 +243,7 @@ auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
 	saveConfigWindowLayout->addWidget(saveConfigSaveButton);
 
 	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigPathLineEditor]() {
-		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.nd1)");
+		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.json)");
 		if (!fileName.isEmpty())
 			saveConfigPathLineEditor->setText(fileName);
 	});
