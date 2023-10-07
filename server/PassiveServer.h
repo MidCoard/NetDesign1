@@ -34,6 +34,8 @@ public:
 	void stop();
 
 	bool checkConfig(TestConfig * testConfig);
+
+	tc::TestNetworkType getTestNetworkType();
 };
 
 

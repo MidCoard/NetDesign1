@@ -4,6 +4,7 @@ static const char *testResultTypeStrings[] = {
 		"WRITE_FAILED",
 		"READ_FAILED",
 		"DATA_MISMATCH",
+		"CONNECT_FAILED",
 		"NO_ERROR",
 };
 

@@ -176,6 +176,7 @@ int main(int argc, char *argv[]) {
 	auto* configConfirmButton = new QPushButton("Confirm Config");
 
 	auto* testResultsTable = new QTableWidget;
+	testResultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	QObject::connect(configConfirmButton, &QPushButton::clicked, [testResultsTable, configWindow, totalCountEditor, singleCountEditor, totalIntervalEditor, singleIntervalEditor, configNetworkTypeComboBox, sourcePortEditor, destinationAddressEditor, destinationPortEditor, customDataLengthEditor
 																  ]() {
 		bool ok = true;
@@ -316,9 +317,19 @@ int main(int argc, char *argv[]) {
 		passiveServer = new PassiveServer(*globalTestConfig);
 		passiveServer->start();
 		passiveServerStatus.setStatus(ps::Status::RUNNING);
+		if (activeServer == nullptr) {
+			activeServer = new ActiveServer(globalTestConfig);
+			activeServerStatus.setStatus(as::Status::IDLE);
+		}
 	});
 
 	QObject::connect(passiveStopButton, &QPushButton::clicked, []() {
+		if (passiveServer->getTestNetworkType() == tc::TestNetworkType ::TCP) {
+			activeServer->stop();
+			delete activeServer;
+			activeServer = nullptr;
+			activeServerStatus.setStatus(as::Status::STOPPED);
+		}
 		passiveServer->stop();
 		passiveServerStatus.setStatus(ps::Status::STOPPED);
 		delete passiveServer;

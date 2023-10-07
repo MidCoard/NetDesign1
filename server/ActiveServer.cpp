@@ -1,4 +1,12 @@
+#include <sys/poll.h>
 #include "ActiveServer.h"
+
+static bool isSocketConnected(int socket) {
+	struct pollfd pfd{};
+	pfd.fd = socket;
+	pfd.events = POLLOUT;
+	return poll(&pfd, 1, 0) == 1;
+}
 
 ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
 	this->buffer = new unsigned char[testConfig->getCustomDataLength()];
@@ -25,25 +33,28 @@ ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
 		if (bind(client, (struct sockaddr *) &clientAddr, sizeof(clientAddr)) == -1)
 			throw std::runtime_error("Failed to bind socket at port " + std::to_string(testConfig->getSourcePort()));
 	}
-	if (testConfig->getTestNetworkType() == tc::TestNetworkType::TCP) {
+}
+
+TestResults ActiveServer::test() {
+	TestResults results = TestResults(testConfig->getTotalTestCount());
+	if (!isSocketConnected(this->client) && testConfig->getTestNetworkType() == tc::TestNetworkType::TCP) {
 		struct sockaddr_in addr{};
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(testConfig->getDestinationPort());
 		addr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
-		if (connect(client, (struct sockaddr *) &addr, sizeof(addr)) == -1)
-			throw std::runtime_error("Failed to connect to " + std::string(testConfig->getDestinationAddress()) + ":" +
-			                         std::to_string(testConfig->getDestinationPort()));
+		if (connect(client, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+			for (int i = 0; i < testConfig->getTotalTestCount(); i++)
+				for (int j = 0; j < testConfig->getSingleTestCount(); j++)
+					results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
+			return results;
+		}
 	}
-}
-
-TestResults ActiveServer::test() {
 	struct sockaddr_in serverAddr{};
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(testConfig->getDestinationPort());
 	serverAddr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
 	socklen_t addrlen = sizeof(serverAddr);
 	this->canClose = false;
-	TestResults results = TestResults(testConfig->getTotalTestCount());
 	for (int i = 0; i < this->testConfig->getTotalTestCount(); i++) {
 		for (int j = 0; j < this->testConfig->getSingleTestCount(); j++) {
 			auto now = std::chrono::high_resolution_clock::now();

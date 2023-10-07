@@ -71,4 +71,8 @@ bool PassiveServer::checkConfig(TestConfig *testConfig) {
 	return testConfig->getDestinationPort() == this->port && testConfig->getTestNetworkType() == this->testNetworkType && testConfig->getCustomDataLength() == this->customDataLength;
 }
 
+tc::TestNetworkType PassiveServer::getTestNetworkType() {
+	return this->testNetworkType;
+}
+
 

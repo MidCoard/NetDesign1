@@ -20,7 +20,6 @@ void TestConfigConstructor::setSingleTestInterval(const QString &q) {
 
 void TestConfigConstructor::setNetworkType(int index) {
 	this->testNetworkType = (tc::TestNetworkType) index;
-	std::cout<<"changed to "<<index<<std::endl;
 }
 
 void TestConfigConstructor::setSourcePort(const QString &q) {
