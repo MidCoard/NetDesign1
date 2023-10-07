@@ -78,6 +78,9 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 
 	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
 		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.nd1)"));
+		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
+		if (!ok)
+			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
 	});
 
 	QObject::connect(configLoadButton, &QPushButton::clicked, [configFilePathLineEditor]() {
@@ -210,7 +213,6 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 			testResultsTable->clear();
 			testResultsTable->setRowCount(globalTestConfig->getTotalTestCount());
 			testResultsTable->setColumnCount(globalTestConfig->getSingleTestCount());
-			QMessageBox::information(nullptr, "Success", "Config confirmed");
 			configWindow->hide();
 			return;
 		} else {
