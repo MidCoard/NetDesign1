@@ -21,7 +21,7 @@ private:
 
 	std::thread *thread = nullptr;
 
-	bool shouldClose = false;
+	volatile bool shouldClose = false;
 
 public:
 

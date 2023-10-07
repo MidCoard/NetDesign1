@@ -7,7 +7,9 @@
 #include <string_view>
 #include <sys/socket.h>
 #include "QString"
+#include <nlohmann/json.hpp>
 
+using json = nlohmann::json;
 
 namespace tc {
 
