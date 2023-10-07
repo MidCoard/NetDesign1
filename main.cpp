@@ -74,18 +74,12 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 	configWindow->setWindowTitle("Config");
 	auto* configFileLabel = new QLabel("Path");
 	auto* configFilePathLineEditor = new QLineEdit;
+	configFilePathLineEditor->setReadOnly(true);
 	auto* configFileSelectButton = new QPushButton("Select File");
-	auto* configLoadButton = new QPushButton("Load Config");
-	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton, configLoadButton});
+	addHorizontalWidgetsInVerticalLayout(configWindowLayout, {configFileLabel, configFilePathLineEditor, configFileSelectButton});
 
 	QObject::connect(configFileSelectButton, &QPushButton::clicked, [configFilePathLineEditor]() {
 		configFilePathLineEditor->setText(QFileDialog::getOpenFileName(nullptr, "Select Config File", "", "Config File(*.nd1)"));
-		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
-		if (!ok)
-			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
-	});
-
-	QObject::connect(configLoadButton, &QPushButton::clicked, [configFilePathLineEditor]() {
 		bool ok = globalTestConfigConstructor.loadFromFile(configFilePathLineEditor->text());
 		if (!ok)
 			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
@@ -239,20 +233,15 @@ auto* setupSaveConfigWindow(QPushButton* configSaveButton) {
 
 	auto* saveConfigPathLineEditor = new QLineEdit;
 	auto* saveConfigFileSelectButton = new QPushButton("Select File");
-	auto* saveConfigSaveButton = new QPushButton("Save Config");
 
 	auto* saveConfigWindowLayout = new QHBoxLayout;
 	saveConfigWindowLayout->addWidget(saveConfigPathLineEditor);
 	saveConfigWindowLayout->addWidget(saveConfigFileSelectButton);
-	saveConfigWindowLayout->addWidget(saveConfigSaveButton);
 
-	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigPathLineEditor]() {
+	QObject::connect(saveConfigFileSelectButton, &QPushButton::clicked, [saveConfigWindow, saveConfigPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Save Config", "", "Config File (*.nd1)");
 		if (!fileName.isEmpty())
 			saveConfigPathLineEditor->setText(fileName);
-	});
-
-	QObject::connect(saveConfigSaveButton, &QPushButton::clicked, [saveConfigPathLineEditor, saveConfigWindow]() {
 		if (saveConfigPathLineEditor->text().isEmpty()) {
 			QMessageBox::critical(nullptr, "Error", "File path is empty");
 			return;
@@ -388,17 +377,13 @@ auto* setupExport() {
 	auto* exportAllWindow = new QWidget;
 	auto* exportAllWindowLayout = new QHBoxLayout;
 	auto* exportAllPathLineEditor = new QLineEdit;
+	exportAllPathLineEditor->setReadOnly(true);
 	auto* exportAllPathButton = new QPushButton("Select File");
 
-	QObject::connect(exportAllPathButton, &QPushButton::clicked, [exportAllPathLineEditor]() {
+	QObject::connect(exportAllPathButton, &QPushButton::clicked, [exportAllWindow, exportAllPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
 		if (!fileName.isEmpty())
 			exportAllPathLineEditor->setText(fileName);
-	});
-
-	auto* exportAllSaveButton = new QPushButton("Export");
-
-	QObject::connect(exportAllSaveButton, &QPushButton::clicked, [exportAllWindow, exportAllPathLineEditor]() {
 		QFile file(exportAllPathLineEditor->text());
 		if (!file.open(QIODevice::WriteOnly)) {
 			QMessageBox::critical(nullptr, "Error", "File open failed");
@@ -418,7 +403,6 @@ auto* setupExport() {
 
 	exportAllWindowLayout->addWidget(exportAllPathLineEditor);
 	exportAllWindowLayout->addWidget(exportAllPathButton);
-	exportAllWindowLayout->addWidget(exportAllSaveButton);
 	exportAllWindow->setLayout(exportAllWindowLayout);
 	exportAllWindow->setWindowTitle("Export All");
 	exportAllWindow->hide();
@@ -434,17 +418,13 @@ auto* setupExport() {
 	auto* exportDurationWindow = new QWidget;
 	auto* exportDurationWindowLayout = new QHBoxLayout;
 	auto* exportDurationPathLineEditor = new QLineEdit;
+	exportDurationPathLineEditor->setReadOnly(true);
 	auto* exportDurationPathButton = new QPushButton("Select File");
 
-	QObject::connect(exportDurationPathButton, &QPushButton::clicked, [exportDurationPathLineEditor]() {
+	QObject::connect(exportDurationPathButton, &QPushButton::clicked, [exportDurationWindow, exportDurationPathLineEditor]() {
 		QString fileName = QFileDialog::getSaveFileName(nullptr, "Select File", "", "JSON (*.json)");
 		if (!fileName.isEmpty())
 			exportDurationPathLineEditor->setText(fileName);
-	});
-
-	auto* exportDurationSaveButton = new QPushButton("Export");
-
-	QObject::connect(exportDurationSaveButton, &QPushButton::clicked, [exportDurationWindow, exportDurationPathLineEditor]() {
 		QFile file(exportDurationPathLineEditor->text());
 		if (!file.open(QIODevice::WriteOnly)) {
 			QMessageBox::critical(nullptr, "Error", "File open failed");
@@ -464,7 +444,6 @@ auto* setupExport() {
 
 	exportDurationWindowLayout->addWidget(exportDurationPathLineEditor);
 	exportDurationWindowLayout->addWidget(exportDurationPathButton);
-	exportDurationWindowLayout->addWidget(exportDurationSaveButton);
 	exportDurationWindow->setLayout(exportDurationWindowLayout);
 	exportDurationWindow->setWindowTitle("Export Duration");
 	exportDurationWindow->hide();
