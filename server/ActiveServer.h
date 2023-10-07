@@ -21,6 +21,8 @@ private:
 
 	bool canClose = true;
 
+	void init();
+
 public:
 	explicit ActiveServer(TestConfig* testConfig);
 

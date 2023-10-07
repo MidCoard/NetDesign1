@@ -19,6 +19,8 @@
 #include "TestResults.h"
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <csignal>
+
 using json = nlohmann::json;
 
 static PassiveServer * passiveServer = nullptr;
@@ -359,7 +361,6 @@ auto* setupActive(QTableWidget* testResultsTable) {
 
 	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, [testResultsTable]() {
 		if (activeServerStatus.getStatus() == as::Status::TESTED) {
-			QMessageBox::information(nullptr, "Success", "Test finished");
 			activeServerStatus.setStatus(as::Status::IDLE);
 			testResultsTable->clear();
 			for (int i = 0; i < globalTestConfig->getTotalTestCount(); i++)

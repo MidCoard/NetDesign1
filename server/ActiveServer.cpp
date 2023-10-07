@@ -8,31 +8,16 @@ static bool isSocketConnected(int socket) {
 	return poll(&pfd, 1, 0) == 1;
 }
 
+static bool isSocketRemoteClosed(int socket) {
+	struct pollfd pfd{};
+	pfd.fd = socket;
+	pfd.events = POLLIN;
+	return poll(&pfd, 1, 0) == 1;
+}
+
 ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
 	this->buffer = new unsigned char[testConfig->getCustomDataLength()];
-	this->client = socket(AF_INET, tc::convertNetworkType(testConfig->getTestNetworkType()), 0);
-	if (client == -1)
-		throw std::runtime_error("Failed to create socket at port " + std::to_string(testConfig->getSourcePort()));
-	int option = 1;
-	if (setsockopt(client, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
-		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
-	if (setsockopt(client, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option)) == -1)
-		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
-	struct timeval timeout{};
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
-	if (setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
-		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
-	if (setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
-		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
-	if (testConfig->getSourcePort() != 0) {
-		struct sockaddr_in clientAddr{};
-		clientAddr.sin_family = AF_INET;
-		clientAddr.sin_port = htons(testConfig->getSourcePort());
-		clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		if (bind(client, (struct sockaddr *) &clientAddr, sizeof(clientAddr)) == -1)
-			throw std::runtime_error("Failed to bind socket at port " + std::to_string(testConfig->getSourcePort()));
-	}
+	init();
 }
 
 TestResults ActiveServer::test() {
@@ -48,6 +33,15 @@ TestResults ActiveServer::test() {
 					results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
 			return results;
 		}
+	}
+	if (isSocketRemoteClosed(this->client)) {
+		for (int i = 0; i < testConfig->getTotalTestCount(); i++)
+			for (int j = 0; j < testConfig->getSingleTestCount(); j++)
+				results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
+		shutdown(this->client, SHUT_RDWR);
+		::close(this->client);
+		init();
+		return results;
 	}
 	struct sockaddr_in serverAddr{};
 	serverAddr.sin_family = AF_INET;
@@ -121,6 +115,32 @@ bool ActiveServer::refreshConfig(TestConfig *testConfig) {
 	delete this->testConfig;
 	this->testConfig = testConfig;
 	return true;
+}
+
+void ActiveServer::init() {
+	this->client = socket(AF_INET, tc::convertNetworkType(testConfig->getTestNetworkType()), 0);
+	if (client == -1)
+		throw std::runtime_error("Failed to create socket at port " + std::to_string(testConfig->getSourcePort()));
+	int option = 1;
+	if (setsockopt(client, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	if (setsockopt(client, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	struct timeval timeout{};
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+	if (setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	if (setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
+		throw std::runtime_error("Failed to set socket options at port " + std::to_string(testConfig->getSourcePort()));
+	if (testConfig->getSourcePort() != 0) {
+		struct sockaddr_in clientAddr{};
+		clientAddr.sin_family = AF_INET;
+		clientAddr.sin_port = htons(testConfig->getSourcePort());
+		clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		if (bind(client, (struct sockaddr *) &clientAddr, sizeof(clientAddr)) == -1)
+			throw std::runtime_error("Failed to bind socket at port " + std::to_string(testConfig->getSourcePort()));
+	}
 }
 
 
