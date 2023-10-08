@@ -71,16 +71,20 @@ bool TestConfigConstructor::loadFromFile(const QString& path) {
     std::uint64_t totalTestIntVal;
     std::string customDataString;
 
-    rawJson.at("singleTestCount").get_to(this->singleTestCount);
-    rawJson.at("totalTestCount").get_to(this->totalTestCount);
-    rawJson.at("singleTestInterval").get_to(singleTestIntVal);
-    rawJson.at("totalTestInterval").get_to(totalTestIntVal);
-    rawJson.at("testNetworkType").get_to(this->testNetworkType);
-    rawJson.at("sourcePort").get_to(this->sourcePort);
-    rawJson.at("destinationAddress").get_to(this->destinationAddress);
-    rawJson.at("destinationPort").get_to(this->destinationPort);
-    rawJson.at("customData").get_to(customDataString);
-    rawJson.at("customDataLength").get_to(this->customDataLength);
+	try {
+		rawJson.at("singleTestCount").get_to(this->singleTestCount);
+		rawJson.at("totalTestCount").get_to(this->totalTestCount);
+		rawJson.at("singleTestInterval").get_to(singleTestIntVal);
+		rawJson.at("totalTestInterval").get_to(totalTestIntVal);
+		rawJson.at("testNetworkType").get_to(this->testNetworkType);
+		rawJson.at("sourcePort").get_to(this->sourcePort);
+		rawJson.at("destinationAddress").get_to(this->destinationAddress);
+		rawJson.at("destinationPort").get_to(this->destinationPort);
+		rawJson.at("customData").get_to(customDataString);
+		rawJson.at("customDataLength").get_to(this->customDataLength);
+	} catch (json::exception& e) {
+		return false;
+	}
 
     this->singleTestInterval = std::chrono::microseconds(singleTestIntVal);
     this->totalTestInterval = std::chrono::microseconds(totalTestIntVal);

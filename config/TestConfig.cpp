@@ -109,7 +109,20 @@ bool TestConfig::saveToFile(const QString& path) {
 		return false;
 
     QTextStream out(&file);
-    out << toJson().dump(4).c_str();
+
+	std::string customDataString = std::string((char *) customData, customDataLength);
+	json j = json{{"singleTestCount", singleTestCount},
+	                {"totalTestCount", totalTestCount},
+	                {"singleTestInterval", singleTestInterval.count()},
+	                {"totalTestInterval", totalTestInterval.count()},
+	                {"testNetworkType", testNetworkType},
+	                {"sourcePort", sourcePort},
+	                {"destinationAddress", destinationAddress},
+	                {"destinationPort", destinationPort},
+	                {"customData", customDataString},
+	                {"customDataLength", customDataLength}};
+
+    out << j.dump(4).c_str();
 
 	file.close();
 	if (file.error() != QFile::NoError || out.status() != QTextStream::Ok)
@@ -117,22 +130,4 @@ bool TestConfig::saveToFile(const QString& path) {
 
 	return true;
 }
-
-json TestConfig::toJson() {
-    std::string customDataString;
-    customDataString.assign(reinterpret_cast<const char *>(customData), customDataLength);
-    json ret = json{{"singleTestCount", singleTestCount},
-                    {"totalTestCount", totalTestCount},
-                    {"singleTestInterval", singleTestInterval.count()},
-                    {"totalTestInterval", totalTestInterval.count()},
-                    {"testNetworkType", testNetworkType},
-                    {"sourcePort", sourcePort},
-                    {"destinationAddress", destinationAddress},
-                    {"destinationPort", destinationPort},
-                    {"customData", customDataString},
-                    {"customDataLength", customDataLength}};
-    return ret;
-}
-
-
 
