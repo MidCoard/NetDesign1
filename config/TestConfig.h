@@ -83,8 +83,6 @@ public:
 
 	unsigned int getCustomDataLength() const;
 
-    json toJson();
-
 	bool saveToFile(const QString& path);
 
 };
