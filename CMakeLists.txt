@@ -19,6 +19,10 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 
 file(GLOB_RECURSE SOURCES "config/*.cpp" "server/*.cpp" "ui/*.cpp")
 
+if (WIN32)
+    add_definitions(-DWIN32)
+endif ()
+
 include_directories(config server ui .)
 
 add_executable(NetDesign1 main.cpp ${SOURCES})
