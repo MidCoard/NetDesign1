@@ -20,6 +20,7 @@
 #include <nlohmann/json.hpp>
 #include "config.h"
 #include <tuple>
+#include <QProcess>
 
 using json = nlohmann::json;
 
@@ -317,6 +318,31 @@ auto* setupPassive() {
 	return passiveLayout;
 }
 
+auto* setupPlot(QProcess& pythonProcess){
+	auto* plotBtn = new QPushButton("Draw Plot");
+	auto* plotLayout = new  QHBoxLayout;
+	
+    pythonProcess.setProcessChannelMode(QProcess::MergedChannels);
+	pythonProcess.setEnvironment(QProcess::systemEnvironment());
+	QObject::connect(plotBtn, &QPushButton::clicked, [&]() {
+		if (currentTestResults == nullptr)
+		{
+			QMessageBox::critical(nullptr, "Error", "No test results");
+			return;
+		}
+		QString data = QString::fromStdString(currentTestResults->toJsonWithDuration().dump());
+		QStringList args = QStringList() << data;
+		
+        // 启动Python进程并执行绘图代码
+
+        pythonProcess.start("python3", QStringList() << "plot.py" << args);
+        pythonProcess.waitForFinished();
+
+    });
+	plotLayout->addWidget(plotBtn);
+	return plotLayout;
+}
+
 auto* setupActive(QTableWidget* testResultsTable) {
 	auto* activeLabel = new QLabel("Test Client");
 	auto* activeTestButton = new QPushButton("Test");
@@ -481,12 +507,15 @@ int main(int argc, char *argv[]) {
 	auto* passiveLayout = setupPassive();
 	auto* activeLayout = setupActive(testResultsTable);
 	auto* exportLayout = setupExport();
+	QProcess pythonProcess;
+	auto* plotLayout = setupPlot(pythonProcess);
 
 	auto* mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(configLayout);
 	mainLayout->addLayout(passiveLayout);
 	mainLayout->addLayout(activeLayout);
 	mainLayout->addWidget(testResultsTable);
+	mainLayout->addLayout(plotLayout);
 	mainLayout->addLayout(exportLayout);
 
 
