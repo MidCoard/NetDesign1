@@ -19,8 +19,12 @@ PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.get
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(this->internal, (struct sockaddr *) &addr, sizeof(addr)) == -1)
 		throw std::runtime_error("Failed to bind socket at port " + std::to_string(port));
-	if (testNetworkType == tc::TestNetworkType::TCP)
+	if (testNetworkType == tc::TestNetworkType::TCP) {
+#ifdef WIN32
+		ioctlsocket(this->internal, FIONBIO, (unsigned long *) &option);
+#endif
 		listen(this->internal, testConfig.getSingleTestCount());
+	}
 }
 
 void PassiveServer::start() {
