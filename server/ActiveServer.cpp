@@ -31,6 +31,7 @@ TestResults ActiveServer::test() {
 			for (int i = 0; i < testConfig->getTotalTestCount(); i++)
 				for (int j = 0; j < testConfig->getSingleTestCount(); j++)
 					results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
+			init();
 			return results;
 		}
 	}

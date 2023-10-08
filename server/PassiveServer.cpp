@@ -39,7 +39,7 @@ void PassiveServer::start() {
 					while (!this->shouldClose) {
 						length = recv(client, this->buffer, customDataLength, MSG_DONTWAIT);
 						if (length != -1)
-							write(client, this->buffer, length);
+							send(client, this->buffer, length, MSG_DONTWAIT);
 						else if (errno != 0x23)
 							break;
 					}
@@ -47,9 +47,9 @@ void PassiveServer::start() {
 					::close(client);
 				});
 			} else {
-				unsigned int length = recvfrom(this->internal, this->buffer, customDataLength, 0, (struct sockaddr *) &addr, &addrlen);
+				unsigned int length = recvfrom(this->internal, this->buffer, customDataLength, MSG_DONTWAIT, (struct sockaddr *) &addr, &addrlen);
 				if (length != 0)
-					sendto(this->internal, this->buffer, length, 0, (struct sockaddr *) &addr, addrlen);
+					sendto(this->internal, this->buffer, length, MSG_DONTWAIT, (struct sockaddr *) &addr, addrlen);
 			}
 		}
 	});
