@@ -9,6 +9,11 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
 
 set(CMAKE_AUTOMOC ON)
 
+set(PYTHON_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/plot.py")
+
+# 拷贝Python脚本到构建目录
+configure_file(${PYTHON_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+
 find_package(Qt6 COMPONENTS
         Core
         Gui
