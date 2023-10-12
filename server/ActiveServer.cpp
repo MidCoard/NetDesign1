@@ -12,14 +12,10 @@ static bool isSocketConnected(int socket) {
 }
 
 static bool isSocketRemoteClosed(int socket) {
-	return false;
 	struct pollfd pfd{};
 	pfd.fd = socket;
 	pfd.events = POLLIN;
-	int ret = (poll(&pfd, 1, 0) == 1);
-	if (ret && (pfd.revents & POLLHUP))
-		return true;
-	return ret;
+	return poll(&pfd, 1, 0) == 1;
 }
 
 ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {
@@ -43,13 +39,22 @@ TestResults ActiveServer::test() {
 		}
 	}
 	if (isSocketRemoteClosed(this->client)) {
-		for (int i = 0; i < testConfig->getTotalTestCount(); i++)
-			for (int j = 0; j < testConfig->getSingleTestCount(); j++)
-				results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
 		shutdown(this->client, SHUT_RDWR);
 		::close(this->client);
 		init();
-		return results;
+		if (testConfig->getTestNetworkType() == tc::TestNetworkType::TCP) {
+			struct sockaddr_in addr{};
+			addr.sin_family = AF_INET;
+			addr.sin_port = htons(testConfig->getDestinationPort());
+			addr.sin_addr.s_addr = inet_addr(testConfig->getDestinationAddress().data());
+			if (connect(client, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+				init();
+				for (int i = 0; i < testConfig->getTotalTestCount(); i++)
+					for (int j = 0; j < testConfig->getSingleTestCount(); j++)
+						results.push(i, TestResult(tr::TestResultType::CONNECT_FAILED, std::chrono::microseconds(0)));
+				return results;
+			}
+		}
 	}
 	struct sockaddr_in serverAddr{};
 	serverAddr.sin_family = AF_INET;
