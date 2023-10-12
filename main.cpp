@@ -208,21 +208,21 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 					return;
 				}
 			}
-			testResultsTable->clear();
+
 			testResultsTable->setRowCount(globalTestConfig->getTotalTestCount());
 			testResultsTable->setColumnCount(globalTestConfig->getSingleTestCount());
 
-            QStringList testResultsTableHLabel(globalTestConfig->getSingleTestCount());
-            std::generate(testResultsTableHLabel.begin(), testResultsTableHLabel.end(), [i = 0]() mutable {
-                return QString("Sample ") + QString::number(++i);
-            });
-            testResultsTable->setHorizontalHeaderLabels(testResultsTableHLabel);
+			QStringList testResultsTableHLabel(globalTestConfig->getSingleTestCount());
+			std::generate(testResultsTableHLabel.begin(), testResultsTableHLabel.end(), [i = 0]() mutable {
+				return QString("Sample ") + QString::number(++i);
+			});
+			testResultsTable->setHorizontalHeaderLabels(testResultsTableHLabel);
 
-            QStringList testResultsTableVLabel(globalTestConfig->getTotalTestCount());
-            std::generate(testResultsTableVLabel.begin(), testResultsTableVLabel.end(), [i = 0]() mutable {
-                return QString("Test ") + QString::number(++i);
-            });
-            testResultsTable->setVerticalHeaderLabels(testResultsTableVLabel);
+			QStringList testResultsTableVLabel(globalTestConfig->getTotalTestCount());
+			std::generate(testResultsTableVLabel.begin(), testResultsTableVLabel.end(), [i = 0]() mutable {
+				return QString("Test ") + QString::number(++i);
+			});
+			testResultsTable->setVerticalHeaderLabels(testResultsTableVLabel);
 
 			configWindow->hide();
 			return;
@@ -393,7 +393,7 @@ auto* setupActive(QTableWidget* testResultsTable) {
 	QObject::connect(&activeServerStatus, &ActiveServerStatus::statusChanged, &activeServerStatus, [testResultsTable]() {
 		if (activeServerStatus.getStatus() == as::Status::TESTED) {
 			activeServerStatus.setStatus(as::Status::IDLE);
-			testResultsTable->clear();
+
 			for (int i = 0; i < globalTestConfig->getTotalTestCount(); i++)
 				for (int j = 0; j < globalTestConfig->getSingleTestCount(); j++) {
 					if (currentTestResults->get(i,j).type == tr::TestResultType::NO_ERROR)
