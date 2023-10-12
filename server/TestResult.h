@@ -1,7 +1,8 @@
 #ifndef NETDESIGN1_TESTRESULT_H
 #define NETDESIGN1_TESTRESULT_H
-#include "iostream"
-#include "chrono"
+
+#include <iostream>
+#include <chrono>
 
 namespace tr {
 

@@ -1,8 +1,8 @@
 #ifndef NETDESIGN1_PASSIVESERVERSTATUS_H
 #define NETDESIGN1_PASSIVESERVERSTATUS_H
 
-#include "QObject"
-#include "string"
+#include <QObject>
+#include <string>
 
 namespace ps {
 	typedef enum {

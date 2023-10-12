@@ -1,12 +1,12 @@
 #ifndef NETDESIGN1_PASSIVESERVER_H
 #define NETDESIGN1_PASSIVESERVER_H
 
-#include "TestConfig.h"
 #include <string>
-#include <netinet/in.h>
 #include <thread>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
+#include "TestConfig.h"
 #include "config.h"
 
 class PassiveServer {

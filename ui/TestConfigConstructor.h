@@ -1,8 +1,8 @@
 #ifndef NETDESIGN1_TESTCONFIGCONSTRUCTOR_H
 #define NETDESIGN1_TESTCONFIGCONSTRUCTOR_H
 
-#include "chrono"
-#include "QObject"
+#include <chrono>
+#include <QObject>
 #include <QtCore/QString>
 #include "TestConfig.h"
 

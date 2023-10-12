@@ -1,4 +1,3 @@
-#include <sys/poll.h>
 #include "ActiveServer.h"
 
 static bool isSocketConnected(int socket) {
