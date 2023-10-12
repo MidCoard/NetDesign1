@@ -5,14 +5,21 @@ static bool isSocketConnected(int socket) {
 	struct pollfd pfd{};
 	pfd.fd = socket;
 	pfd.events = POLLOUT;
-	return poll(&pfd, 1, 0) == 1;
+	int ret = poll(&pfd, 1, 0);
+	if (ret && (pfd.revents & POLLHUP))
+		return false;
+	return ret;
 }
 
 static bool isSocketRemoteClosed(int socket) {
+	return false;
 	struct pollfd pfd{};
 	pfd.fd = socket;
 	pfd.events = POLLIN;
-	return poll(&pfd, 1, 0) == 1;
+	int ret = (poll(&pfd, 1, 0) == 1);
+	if (ret && (pfd.revents & POLLHUP))
+		return true;
+	return ret;
 }
 
 ActiveServer::ActiveServer(TestConfig* testConfig) : testConfig(testConfig) {

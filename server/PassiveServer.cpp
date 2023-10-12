@@ -20,9 +20,7 @@ PassiveServer::PassiveServer(const TestConfig& testConfig) : port(testConfig.get
 	if (bind(this->internal, (struct sockaddr *) &addr, sizeof(addr)) == -1)
 		throw std::runtime_error("Failed to bind socket at port " + std::to_string(port));
 	if (testNetworkType == tc::TestNetworkType::TCP) {
-#ifdef WIN32
-		ioctlsocket(this->internal, FIONBIO, (unsigned long *) &option);
-#endif
+		fcntl(this->internal, F_SETFL, O_NONBLOCK);
 		listen(this->internal, testConfig.getSingleTestCount());
 	}
 }
@@ -44,7 +42,7 @@ void PassiveServer::start() {
 						length = recv(client, this->buffer, customDataLength, MSG_DONTWAIT);
 						if (length != -1)
 							send(client, this->buffer, length, MSG_DONTWAIT);
-						else if (errno != 0x23)
+						else if (errno != 0x23 && errno != 0x0B)
 							break;
 					}
 					shutdown(client, SHUT_RDWR);
