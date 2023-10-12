@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QMessageBox>
 #include <QTableWidget>
+#include <QHeaderView>
 #include "QFileDialog"
 #include <QThread>
 #include <tuple>
@@ -210,6 +211,19 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 			testResultsTable->clear();
 			testResultsTable->setRowCount(globalTestConfig->getTotalTestCount());
 			testResultsTable->setColumnCount(globalTestConfig->getSingleTestCount());
+
+            QStringList testResultsTableHLabel(globalTestConfig->getSingleTestCount());
+            std::generate(testResultsTableHLabel.begin(), testResultsTableHLabel.end(), [i = 0]() mutable {
+                return QString("Sample ") + QString::number(++i);
+            });
+            testResultsTable->setHorizontalHeaderLabels(testResultsTableHLabel);
+
+            QStringList testResultsTableVLabel(globalTestConfig->getTotalTestCount());
+            std::generate(testResultsTableVLabel.begin(), testResultsTableVLabel.end(), [i = 0]() mutable {
+                return QString("Test ") + QString::number(++i);
+            });
+            testResultsTable->setVerticalHeaderLabels(testResultsTableVLabel);
+
 			configWindow->hide();
 			return;
 		} else {
@@ -500,6 +514,9 @@ int main(int argc, char *argv[]) {
 	configLayout->addWidget(configSaveButton);
 
 	auto* testResultsTable = new QTableWidget;
+    testResultsTable->horizontalHeader()->setStretchLastSection(true);
+    testResultsTable->horizontalHeader()->setHighlightSections(false);
+
 	testResultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
 	setupConfigWindow(configButton, testResultsTable);
