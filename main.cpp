@@ -9,7 +9,10 @@
 #include <QMessageBox>
 #include <QTableWidget>
 #include "QFileDialog"
-#include "QThread"
+#include <QThread>
+#include <tuple>
+#include <QProcess>
+#include <nlohmann/json.hpp>
 #include "TestConfig.h"
 #include "PassiveServer.h"
 #include "ActiveServer.h"
@@ -17,10 +20,7 @@
 #include "PassiveServerStatus.h"
 #include "ActiveServerStatus.h"
 #include "TestResults.h"
-#include <nlohmann/json.hpp>
 #include "config.h"
-#include <tuple>
-#include <QProcess>
 
 using json = nlohmann::json;
 
