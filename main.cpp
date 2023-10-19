@@ -87,25 +87,25 @@ auto* setupConfigWindow(QPushButton* configButton, QTableWidget* testResultsTabl
 			QMessageBox::critical(nullptr, "Error", "Load Config Failed");
 	});
 
-	auto* totalCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Count(0-10000)").second;
+	auto* totalCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Test Count (0-10000)").second;
 	totalCountEditor->setValidator(new QIntValidator(0, 10000));
 	QObject::connect(totalCountEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setTotalTestCount);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [totalCountEditor]() {
 		totalCountEditor->setText(globalTestConfigConstructor.getTotalTestCount());
 	});
-	auto* singleCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Count(0-10000)").second;
+	auto* singleCountEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Sample Count (0-10000)").second;
 	singleCountEditor->setValidator(new QIntValidator(0, 10000));
 	QObject::connect(singleCountEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setSingleTestCount);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [singleCountEditor]() {
 		singleCountEditor->setText(globalTestConfigConstructor.getSingleTestCount());
 	});
-	auto* totalIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Total Test Interval(0-100000000us)").second;
+	auto* totalIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Test Interval (0-10^8us)").second;
 	totalIntervalEditor->setValidator(new QIntValidator(0, 100000000));
 	QObject::connect(totalIntervalEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setTotalTestInterval);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [totalIntervalEditor]() {
 		totalIntervalEditor->setText(globalTestConfigConstructor.getTotalTestInterval());
 	});
-	auto* singleIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Single Test Interval(0-100000000us)").second;
+	auto* singleIntervalEditor = addHorizontalTextEditorInVerticalLayout(configWindowLayout, "Sample Interval (0-10^8us)").second;
 	singleIntervalEditor->setValidator(new QIntValidator(0, 100000000));
 	QObject::connect(singleIntervalEditor, &QLineEdit::textChanged, &globalTestConfigConstructor, &TestConfigConstructor::setSingleTestInterval);
 	QObject::connect(&globalTestConfigConstructor, &TestConfigConstructor::valueChanged, [singleIntervalEditor]() {
