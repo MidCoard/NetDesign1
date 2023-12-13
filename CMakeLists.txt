@@ -20,7 +20,11 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+# 引入JSON 解析库
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 file(GLOB_RECURSE SOURCES "config/*.cpp" "server/*.cpp" "ui/*.cpp")
 
